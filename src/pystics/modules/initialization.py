@@ -12,7 +12,7 @@ def initialize_outputs_df(weather, crop, manage, initial):
 
     # All computed variables initialized to zero
     colonnes_nulles = [
-        'deltaz','zrac','ulai','deltai_dev','deltai_stress','deltai',
+        'deltaz','zrac','ulai','deltai_dev','deltai_stress','deltai', 'deltai_bis',
         'lai','laisen','dayLAIcreation','eos','flagrain','zdemi',
         'cumlracz','dltams','masec',
         'eo','eop','teta','ep','swfac',
@@ -82,6 +82,7 @@ def initialize_outputs_df(weather, crop, manage, initial):
         "hauteur",
         "z0",
         "tcultmax",
+        "tcultmin",
         "tcult",
         "lev",
         "flo",
@@ -148,13 +149,13 @@ def initialize_outputs_df(weather, crop, manage, initial):
         'efda',
         'znonli',
         'vmax',
-        'msrec_fou', 'masectot', 'masecneo', 'msresjaune', 'msneojaune','deltamsresen', 'msres',
+        'msrec_fou', 'msrec_fou_tot', 'msrec_fou_coupe', 'masectot', 'masecneo', 'msresjaune', 'msneojaune','deltamsresen', 'msres',
         'hur_0_10_cm','hur_10_20_cm','hur_20_30_cm','hur_30_40_cm','hur_40_50_cm','hur_50_60_cm',
         'water_stress_day','water_stress_day_value','thermal_stress_day','thermal_stress_day_value',
         'sumes0','sumes1','sumes2','ses2j0','sesj0','smes02','nstoc','stoc',
         'resrac', 'humirac_mean',
         'cumdltaremobil','sla','somcour', 'tursla', 'rec',
-        'stopfeuille_stage', 'somelong'
+        'stopfeuille_stage', 'somelong', 'cumdltares', 'varintlai', 'varintms'
         
     ]
 
@@ -221,95 +222,95 @@ def initialize_soil_matrix(nb_day, soil, initial, outputs, manage):
     '''
 
     # Root length density profile
-    LRACZ_MATRIX = np.empty((nb_day, soil.DEPTH))
-    LRACZ_MATRIX[:] = 0
+    lracz = np.empty((nb_day, soil.DEPTH))
+    lracz[:] = 0
 
-    LRACZ_MATRIX[0,0:soil.EPC_1] = initial.DENSINITIAL_1
+    lracz[0,0:soil.EPC_1] = initial.DENSINITIAL_1
     if soil.EPC_2 != 0:
-        LRACZ_MATRIX[0,soil.EPC_1:soil.EPC_1+soil.EPC_2] = initial.DENSINITIAL_2
+        lracz[0,soil.EPC_1:soil.EPC_1+soil.EPC_2] = initial.DENSINITIAL_2
     if soil.EPC_3 != 0:
-        LRACZ_MATRIX[0,soil.EPC_1+soil.EPC_2:soil.EPC_1+soil.EPC_2+soil.EPC_3] = initial.DENSINITIAL_3
+        lracz[0,soil.EPC_1+soil.EPC_2:soil.EPC_1+soil.EPC_2+soil.EPC_3] = initial.DENSINITIAL_3
     if soil.EPC_4 != 0:
-        LRACZ_MATRIX[0,soil.EPC_1+soil.EPC_2+soil.EPC_3:soil.EPC_1+soil.EPC_2+soil.EPC_3+soil.EPC_4] = initial.DENSINITIAL_4
+        lracz[0,soil.EPC_1+soil.EPC_2+soil.EPC_3:soil.EPC_1+soil.EPC_2+soil.EPC_3+soil.EPC_4] = initial.DENSINITIAL_4
     if soil.EPC_5 != 0:
-        LRACZ_MATRIX[0,soil.EPC_1+soil.EPC_2+soil.EPC_3+soil.EPC_4:soil.EPC_1+soil.EPC_2+soil.EPC_3+soil.EPC_4+soil.EPC_5] = initial.DENSINITIAL_5
+        lracz[0,soil.EPC_1+soil.EPC_2+soil.EPC_3+soil.EPC_4:soil.EPC_1+soil.EPC_2+soil.EPC_3+soil.EPC_4+soil.EPC_5] = initial.DENSINITIAL_5
 
-    LRACZ_MATRIX[0,int(initial.ZRAC0):] = 0
-    LRACZ_MATRIX[0,:int(manage.PROFSEM)] = 0
+    lracz[0,int(initial.ZRAC0):] = 0
+    lracz[0,:int(manage.PROFSEM)] = 0
 
     # Thermal amplitude profile
-    AMPLZ_MATRIX = np.empty(
+    amplz = np.empty(
         (nb_day, soil.DEPTH)
     )
-    AMPLZ_MATRIX[:] = np.nan
+    amplz[:] = np.nan
 
     # Soil temperature profile
-    TSOL_MATRIX = np.empty(
+    tsol = np.empty(
         (nb_day, soil.DEPTH)
     )
-    TSOL_MATRIX[:] = np.nan
+    tsol[:] = np.nan
 
     # Soil potential profile
-    PSISOL_MATRIX = np.empty(
+    psisol = np.empty(
         (nb_day, soil.DEPTH)
     )
-    PSISOL_MATRIX[:] = np.nan
+    psisol[:] = np.nan
 
     #  Efficient root length densityparticipating in predawn potential profile, located in the moist layers
-    RACINEPSI_MATRIX = np.empty(
+    racinepsi = np.empty(
         (nb_day, soil.DEPTH)
     )
-    RACINEPSI_MATRIX[:] = np.nan
+    racinepsi[:] = np.nan
 
     # Root water extraction from transpiration profile
-    EPZ_MATRIX = np.empty(
+    epz = np.empty(
         (nb_day, soil.DEPTH)
     )
-    EPZ_MATRIX[:] = 0
+    epz[:] = 0
 
     # Microporosity elementary layer soil water content profile
-    HUR_MATRIX = np.empty(
+    hur = np.empty(
         (nb_day, soil.DEPTH)
     )
-    HUR_MATRIX[:] = np.nan
-    HUR_MATRIX[0,0:soil.EPC_1] = initial.HINITF_1 * soil.DAF_1
+    hur[:] = np.nan
+    hur[0,0:soil.EPC_1] = initial.HINITF_1 * soil.DAF_1
     if soil.EPC_2 != 0:
-        HUR_MATRIX[0,soil.EPC_1:soil.EPC_1+soil.EPC_2] = initial.HINITF_2 * soil.DAF_2
+        hur[0,soil.EPC_1:soil.EPC_1+soil.EPC_2] = initial.HINITF_2 * soil.DAF_2
     if soil.EPC_3 != 0:
-        HUR_MATRIX[0,soil.EPC_1+soil.EPC_2:soil.EPC_1+soil.EPC_2+soil.EPC_3] = initial.HINITF_3 * soil.DAF_3 
+        hur[0,soil.EPC_1+soil.EPC_2:soil.EPC_1+soil.EPC_2+soil.EPC_3] = initial.HINITF_3 * soil.DAF_3 
     if soil.EPC_4 != 0:
-        HUR_MATRIX[0,soil.EPC_1+soil.EPC_2+soil.EPC_3:soil.EPC_1+soil.EPC_2+soil.EPC_3+soil.EPC_4] = initial.HINITF_4 * soil.DAF_4
+        hur[0,soil.EPC_1+soil.EPC_2+soil.EPC_3:soil.EPC_1+soil.EPC_2+soil.EPC_3+soil.EPC_4] = initial.HINITF_4 * soil.DAF_4
     if soil.EPC_5 != 0:
-        HUR_MATRIX[0,soil.EPC_1+soil.EPC_2+soil.EPC_3+soil.EPC_4:soil.EPC_1+soil.EPC_2+soil.EPC_3+soil.EPC_4+soil.EPC_5] = initial.HINITF_5 * soil.DAF_5
+        hur[0,soil.EPC_1+soil.EPC_2+soil.EPC_3+soil.EPC_4:soil.EPC_1+soil.EPC_2+soil.EPC_3+soil.EPC_4+soil.EPC_5] = initial.HINITF_5 * soil.DAF_5
 
     # If no intial value --> HCCF
-    HUR_MATRIX[0] = np.where(HUR_MATRIX[0]==0, soil.HCC, HUR_MATRIX[0])
+    hur[0] = np.where(hur[0]==0, soil.HCC, hur[0])
 
     # Soil water availability index profile
-    WI_MATRIX = np.empty(
+    wi = np.empty(
         (nb_day, soil.DEPTH)
     )
-    WI_MATRIX[:] = np.nan
+    wi[:] = np.nan
 
     # Root water extraction from evaporation profile
-    ESZ_MATRIX = np.empty(
+    esz = np.empty(
         (nb_day, soil.DEPTH)
     )
-    ESZ_MATRIX[:] = np.nan
+    esz[:] = np.nan
 
     # Water stress on root growth and density profile
-    HUMIRAC_MATRIX = np.empty(
+    humirac = np.empty(
         (nb_day, soil.DEPTH)
     )
-    HUMIRAC_MATRIX[:] = np.nan
+    humirac[:] = np.nan
 
     # Potential to water content conversion profile
-    HUMPOTSOL_MATRIX = np.empty(
+    humpotsol = np.empty(
         (nb_day, soil.DEPTH)
     )
-    HUMPOTSOL_MATRIX[:] = np.nan
+    humpotsol[:] = np.nan
 
-    return outputs, LRACZ_MATRIX, AMPLZ_MATRIX, TSOL_MATRIX, PSISOL_MATRIX, RACINEPSI_MATRIX, EPZ_MATRIX, HUR_MATRIX, WI_MATRIX, ESZ_MATRIX, HUMIRAC_MATRIX, HUMPOTSOL_MATRIX
+    return outputs, lracz, amplz, tsol, psisol, racinepsi, epz, hur, wi, esz, humirac, humpotsol
 
 
 def compute_constants(crop, soil, station, co2, manage):

@@ -1,7 +1,9 @@
 
 
 
-def cutting(codefauche, cut_number, julfauche, doy, codemodfauche, msresiduel, masec, masecneo, lairesiduel, lai, msrec_fou, mafruit, mscoupemini, masectot, msresjaune, msneojaune, mafeuiljaune, msres, stade0, lev, amf, lax, flo, drp, debdes, i, dayLAIcreation, deltai, somsenreste, dltaisen, laisen, sum_upvt_post_lev):
+def cutting(codefauche, cut_number, julfauche, doy, codemodfauche, msresiduel, masec, masecneo, lairesiduel, lai, msrec_fou, mafruit, mscoupemini, masectot, msresjaune, msneojaune, mafeuiljaune,
+            msres, stade0, lev, amf, lax, flo, drp, debdes, i, dayLAIcreation, deltai, somsenreste, dltaisen, laisen, sum_upvt_post_lev, stlevamf, somtemp,
+            deltai_bis_list, dltams_list, varintlai_list, varintms_list, msrec_fou_coupe):
     '''
 
     This modules checks the 4 conditions for forage crops cutting, and triggers cutting if they are verified.
@@ -25,9 +27,9 @@ def cutting(codefauche, cut_number, julfauche, doy, codemodfauche, msresiduel, m
             
             # If the 3 conditions are verified, we trigger the cutting
             if cut_condition_lai & cut_condition_masec & cut_condition_msrec_fou:
-
                 cut_number += 1
                 masectot = masectot + masec
+                msrec_fou_coupe = msrec_fou_coupe + msrec_fou
                 msrec_fou = 0
                 mafruit = msresiduel
                 masecneo = 0
@@ -38,16 +40,42 @@ def cutting(codefauche, cut_number, julfauche, doy, codemodfauche, msresiduel, m
                 msres = msresiduel
                 lai = lairesiduel + deltai
                 lev = 1
-                amf = 1 if stade0 == 'amf' else 0
+                if stade0 == 'amf':
+                    amf = 1
+                    sum_upvt_post_lev = stlevamf
+                else:
+                    amf = 0
+                    sum_upvt_post_lev = 0  
                 lax = 0
                 flo = 0
                 drp = 0
                 debdes = 0
-                dayLAIcreation = i
+                dayLAIcreation = 1
                 somsenreste = 0
                 laisen = 0
-                dltaisen = 0
-                sum_upvt_post_lev = 0  
-    
-    return masectot, msrec_fou, mafruit, masecneo, msresjaune, msneojaune, mafeuiljaune, masec, msres, lai, cut_number, lev, amf, lax, flo, drp, debdes, dayLAIcreation, somsenreste, dltaisen, laisen, sum_upvt_post_lev
+
+                # Old senescent deltai set to 0
+                cumdeltai = 0.
+                cumdeltams = 0.
+                for j in range(i):
+                    varintlai_list[j] = 0.
+                    varintms_list[j] = 0.
+                    cumdeltai = cumdeltai + deltai_bis_list[j]
+                    cumdeltams = cumdeltams + dltams_list[j]
+                    if cumdeltai > lai:
+                        deltai_bis_list[j] = 0.
+                    if cumdeltams > masec:
+                        dltams_list[j] = 0.
+                k = 0
+                for j in range(i):
+                    if deltai_bis_list[j] > 0:
+                        k = k+1
+                        varintlai_list[k+1] = deltai_bis_list[j]
+                        varintms_list[k+1] = dltams_list[j]
+
+                for j in range(i):
+                    deltai_bis_list[j] = varintlai_list[j]
+                    dltams_list[j] = varintms_list[j]
+                
+    return masectot, msrec_fou, mafruit, masecneo, msresjaune, msneojaune, mafeuiljaune, masec, msres, lai, cut_number, lev, amf, lax, flo, drp, debdes, dayLAIcreation, somsenreste, dltaisen, laisen, sum_upvt_post_lev, somtemp, deltai_bis_list, dltams_list, varintlai_list, varintms_list, msrec_fou_coupe
 

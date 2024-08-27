@@ -52,14 +52,14 @@ def compute_weather_variables(df, station, gamma):
     """
 
     # Mean temperature
-    df['temp'] = (df.temp_min + df.temp_max) / 2
+    df['tmoy'] = (df.temp_min + df.temp_max) / 2
 
     # STICS method for extraterrestrial radiations. (FAO method is defined but not used).
     df['rgex'] = [rgex_stics(station.LATITUDE, df.doy[i]) for i in df.index]
     # df['rgex'] = [rgex_fao(station.LATITUDE, df.doy[i]) for i in df.index]
 
     df["esat"] = 0.6108 * np.exp(17.27 * (df["temp_max"] + df["temp_min"]) / 2 / ((df["temp_max"] + df["temp_min"]) / 2 + 237.3))
-    df["delta"] = 4098 * df["esat"] / ((df["temp"] + 237.3) ** 2)
+    df["delta"] = 4098 * df["esat"] / ((df["tmoy"] + 237.3) ** 2)
 
     # Water vapour pressure in air
     df['tpm'] = (df['temp_min'] - station.CORECTROSEE).apply(tvar) # no option to give it as input in weather file
@@ -82,7 +82,7 @@ def compute_weather_variables(df, station, gamma):
 
     # Potential evapotranspiration
     if station.CODEETP != 1:
-        df['etp'] = df.apply(lambda x : potential_etp(x['trg'], x['temp'], x['wind'], x['tpm'], gamma, station.CODEETP, station.ALPHAPT, x['fracinsol']),
+        df['etp'] = df.apply(lambda x : potential_etp(x['trg'], x['tmoy'], x['wind'], x['tpm'], gamma, station.CODEETP, station.ALPHAPT, x['fracinsol']),
                                                    axis=1)
 
     return df

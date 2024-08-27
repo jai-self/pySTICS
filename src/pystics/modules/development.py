@@ -4,17 +4,17 @@ from pystics.modules.water.water_stress import water_stress_on_root_growth
 
 def emergence_macro(i, outputs, crop, soil, manage, tsol, humirac, hur, humpotsol):
     outputs['moist'], outputs.loc[i,'nbjgrauto'], outputs.loc[i,'nbjhumec'], humirac, outputs.loc[i,'somger'], outputs['ger'], outputs.loc[i,'zrac'], outputs.loc[i,'elong'], outputs['lev'], outputs.loc[i,'coeflev'], outputs['densite'], outputs['let'], outputs.loc[i,'udev'], outputs.loc[i,'somfeuille'], outputs.loc[i,'nbfeuille'], outputs.loc[i,'fgellev'], outputs.loc[i,'somelong'] = emergence(i, outputs['densite'].array, outputs['lev'].array, outputs.loc[i-1,'lev'], outputs['ger'].array, outputs.loc[i-1,'ger'], outputs['moist'].array, outputs.loc[i-1,'moist'], outputs['let'].array, manage.PROFSEM, hur[i], humpotsol[i], crop.PROPJGERMIN, crop.NBJGERLIM, crop.TDMAX, crop.TDMIN, crop.TGMIN,
-                                         tsol, outputs.loc[i-1,'nbjhumec'], soil.HMIN, crop.SENSRSEC, soil.HCC, outputs.loc[i-1,'somger'], crop.STPLTGER, tsol[i], manage.DENSITESEM, crop.CODEHYPO,
-                                         outputs.loc[i,'zrac'], crop.BELONG, crop.CELONG, crop.ELMAX, outputs.loc[i-1,'tcult'], crop.NLEVLIM1, crop.NLEVLIM2, crop.TCXSTOP, outputs.loc[i-1,'somfeuille'], outputs.loc[i,'nbfeuille'], outputs.loc[i-1,'temp_min'],
-                                         crop.TGELLEV90, crop.TGELLEV10, crop.TLETALE, crop.TDEBGEL, crop.PHYLLOTHERME, crop.NBFGELLEV, humirac, soil.DEPTH, crop.CODGELLEV, outputs.loc[i-1,'let'], outputs.loc[i-1,'somelong'], crop.CODETEMP, outputs.loc[i,'temp'])
+                                         tsol, outputs.loc[i-1,'nbjhumec'], soil.HMIN, crop.SENSRSEC, soil.HCC, outputs.loc[i-1,'somger'], crop.STPLTGER, tsol[i-1], manage.DENSITESEM, crop.CODEHYPO,
+                                         outputs.loc[i,'zrac'], crop.BELONG, crop.CELONG, crop.ELMAX, outputs.loc[i-1,'tcult'], crop.NLEVLIM1, crop.NLEVLIM2, crop.TCXSTOP, outputs.loc[i-1,'somfeuille'], outputs.loc[i,'nbfeuille'], outputs.loc[i-1,'tcultmin'],
+                                         crop.TGELLEV90, crop.TGELLEV10, crop.TLETALE, crop.TDEBGEL, crop.PHYLLOTHERME, crop.NBFGELLEV, humirac, soil.DEPTH, crop.CODGELLEV, outputs.loc[i-1,'let'], outputs.loc[i-1,'somelong'], crop.CODETEMP, outputs.loc[i,'tmoy'], crop.CODEGERMIN)
 
     return outputs, humirac
 
 
 def emergence(i, densite_list, lev, lev_i_prev, ger, ger_i_prev, moist, moist_i_prev, let, profsem, hur_i, humpotsol_i, propjgermin, nbjgerlim, tdmax, tdmin,tgmin,
-              tsol, nbjhumec_prev, hmin, sensrsec, hcc, somger_prev, stpltger, tsol_i, densitesem, codehypo,
-              zrac, belong, celong, elmax, tcult_prev, nlevlim1, nlevlim2, tcxstop, somfeuille_prev, nbfeuille, temp_min_prev,
-            tgellev90,tgellev10, tletale, tdebgel, phyllotherme, nbfgellev, humirac, depth, codgellev, let_i_prev, somelong_prev, codetemp, temp):
+              tsol, nbjhumec_prev, hmin, sensrsec, hcc, somger_prev, stpltger, tsol_i_prev, densitesem, codehypo,
+              zrac, belong, celong, elmax, tcult_prev, nlevlim1, nlevlim2, tcxstop, somfeuille_prev, nbfeuille, tcultmin_prev,
+            tgellev90,tgellev10, tletale, tdebgel, phyllotherme, nbfgellev, humirac, depth, codgellev, let_i_prev, somelong_prev, codetemp, temp, codegermin):
     '''
     This module computes emergence of herbaceous plants : moistening, germination and plantlet growth.
     See Section 3.4.1.3 of STICS book.
@@ -26,49 +26,54 @@ def emergence(i, densite_list, lev, lev_i_prev, ger, ger_i_prev, moist, moist_i_
     nbjgrauto, nbjhumec, somger, lev_i, elong, coeflev, udev, somfeuille, fgellev, somelong = 0,0,0,0,0,0,0,0,1, 0
 
     if ger_i_prev == 0: 
+
+        if codegermin == 1:
         
-        ##################
-        ### MOISTENING ###
-        ##################
+            # Seed bed depth (profsem +/-1)
+            sb = range(max(0,int(profsem) - 1),int(profsem) + 2)
 
-        # Seed bed depth (profsem +/-1)
-        sb = range(max(0,int(profsem) - 1),int(profsem) + 2)
+            ###################
+            ### GERMINATION ###
+            ###################
 
-        # Moistening
-        if moist_i_prev != 1:
-            if hur_i[sb].mean() > humpotsol_i[sb].mean():
-                moist[i:len(moist)] = 1
+            # Water stress index affecting germination
+            len_sb = len([i for i in sb])
+            hur_sb = sum([hur_i[z_index] for z_index in sb]) / len_sb
+            hmin_sb = sum([hmin[z_index] for z_index in sb]) / len_sb
+            hcc_sb = sum([hcc[z_index] for z_index in sb]) / len_sb
 
-        # Number of autotrophy days after moistening
-        if moist[i] == 1:
-            ind_moist = np.where(moist > 0)[0][0]
-            nbjgrauto = max(propjgermin * nbjgerlim, min(nbjgerlim,(1 - propjgermin) / (tdmax - tdmin) * (tsol[ind_moist:i,sb].sum(axis=0).mean() / (i - ind_moist + 1) - tgmin) +1))     
-            nbjhumec = nbjhumec_prev + 1
+            humirac[i,sb] = water_stress_on_root_growth(hur_sb, hmin_sb, hcc_sb, sensrsec, 2)
 
-        ###################
-        ### GERMINATION ###
-        ###################
+            # Growing degree days to reach germination
+            somger = somger_prev + max(0, tsol_i_prev[int(profsem)] - tgmin) * humirac[i,sb].mean() # does not depend on sowing day because this module is called when plt=1
+            if somger >= stpltger:
+                ger[i:len(ger)] = 1
+                zrac = profsem
+                somelong = somger - stpltger
 
-        # Water stress index affecting germination
-        len_sb = len([i for i in sb])
-        hur_sb = sum([hur_i[z_index] for z_index in sb]) / len_sb
-        hmin_sb = sum([hmin[z_index] for z_index in sb]) / len_sb
-        hcc_sb = sum([hcc[z_index] for z_index in sb]) / len_sb
+            ##################
+            ### MOISTENING ###
+            ##################
+            if (somger < stpltger) & (ger[i] == 0):
+                if hur_i[sb].mean() > humpotsol_i[sb].mean():
+                    moist[i:len(moist)] = 1
 
-        humirac[i,sb] = water_stress_on_root_growth(hur_sb, hmin_sb, hcc_sb, sensrsec, 2)
+            # Number of autotrophy days after moistening
+            if moist[i] == 1:
+                ind_moist = np.where(moist > 0)[0][0]
+                nbjgrauto = max(propjgermin * nbjgerlim, min(nbjgerlim,(1 - propjgermin) / (tdmax - tdmin) * (tsol[ind_moist:i,sb].sum(axis=0).mean() / (i - ind_moist + 1) - tgmin) +1))     
+                nbjhumec = nbjhumec_prev + 1
 
-        # Growing degree days to reach germination
-        somger = somger_prev + max(0, tsol_i[int(profsem)] - tgmin) * humirac[i,sb].mean() # does not depend on sowing day because this module is called when plt=1
-        if somger >= stpltger:
+
+            # Plant density reduction because of late germination after humectation
+            if nbjhumec >  nbjgrauto:
+                densite_list[i] = max(densitesem, densitesem * somger / stpltger)
+            else:
+                densite_list[i] = densitesem
+        
+        else: # germination not computed
             ger[i:len(ger)] = 1
             zrac = profsem
-            somelong = somger - stpltger
-
-        # Plant density reduction because of late germination after humectation
-        if nbjhumec >  nbjgrauto:
-            densite_list[i] = max(densitesem, densitesem * somger / stpltger)
-        else:
-            densite_list[i] = densitesem
         
     elif lev_i_prev == 0:
 
@@ -90,7 +95,7 @@ def emergence(i, densite_list, lev, lev_i_prev, ger, ger_i_prev, moist, moist_i_
             hmin_hb = sum([hmin[z_index] for z_index in hb]) / len_hb
             hcc_hb = sum([hcc[z_index] for z_index in hb]) / len_hb
 
-            somelong = somelong_prev + max(0, tsol_i[int(profsem)] - tgmin) * water_stress_on_root_growth(hur_hb, hmin_hb, hcc_hb, sensrsec, 2)
+            somelong = somelong_prev + max(0, tsol_i_prev[int(profsem)] - tgmin) * water_stress_on_root_growth(hur_hb, hmin_hb, hcc_hb, sensrsec, 2)
 
             # Plantlet elongation
             elong = elmax * (1 - np.exp(-(belong* somelong)**celong))
@@ -144,7 +149,7 @@ def emergence(i, densite_list, lev, lev_i_prev, ger, ger_i_prev, moist, moist_i_
 
             # Frost stress affecting density
             fgellev = frost_stress(
-            temp_min_prev,
+            tcultmin_prev,
             tgellev90,
             tgellev10,
             tletale,
@@ -235,7 +240,7 @@ def development_temperature(tcult_prev, temp, tdmax, tdmin, tcxstop, coderetflo,
     tdevelop = 2 ** (udevcult / 10)
     somtemp = somtemp_prev + tdevelop
 
-    return udevcult, somtemp
+    return udevcult, somtemp, tdevelop
 
 
 def effective_temperature(temp, tdmax, tdmin, tcxstop):

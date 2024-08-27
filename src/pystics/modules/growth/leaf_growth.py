@@ -4,7 +4,8 @@ import numpy as np
 def leaf_growth(i, lev_i, lax_i, sum_upvt_post_lev, stlevamf, vlaimax, stamflax, udlaimax, dlaimax, pentlaimax,
                     tcult_prev, tcxstop, tcmax, tcmin, adens, bdens, densite, turfac_prev, phoi, phoi_prev, ratiotf,
                     phobase, rfpi, dlaimin, lai_prev, laicomp, stopfeuille, vmax_prev,
-                    codlainet, dltaisenat_prev, fstressgel_prev, laisen_prev, lax, slamin, slamax, dltamsen_prev, dltaisen_prev, lan_i, codephot_part, amf_i, tigefeuil, dltams, codeindetermin, sla_prev, sen, sen_i_prev, somcour, stsenlan, lai_list):
+                    codlainet, dltaisenat_prev, fstressgel_prev, laisen_prev, lax, slamin, slamax, dltamsen_prev,
+                    dltaisen_prev, lan_i, codephot_part, amf_i, tigefeuil, dltams_prev, codeindetermin, sla_prev, sen, sen_i_prev, somcour, stsenlan, lai_list, dltaremobil_prev, remobilj_prev):
     '''
     This module computes the leaf growth (deltai) and its different components (ulai, deltai_dev, deltai_t, deltai_stress).
     See section 4.1 of STICS book.
@@ -99,7 +100,7 @@ def leaf_growth(i, lev_i, lax_i, sum_upvt_post_lev, stlevamf, vlaimax, stamflax,
         
         # Max deltai
         sbvmax = slamax / (1.0 + tigefeuil)
-        deltaimaxi = dltams * sbvmax / 100. # remobilj = 0
+        deltaimaxi = (dltams_prev + dltaremobil_prev + remobilj_prev) * sbvmax / 100.
         if (amf_i > 0):
             deltai = min(deltai, deltaimaxi)
 

@@ -2,7 +2,7 @@
 
 
 
-def cumultative_partitioning(lev, mafeuil, matigestruc, mafruit_prev, maenfruit_prev, codeperenne, masec, restemp0, resplmax, densite, remobres, deltai, slamin, ratiotf, codeindetermin, cumdltaremobil_prev, dltams):
+def cumultative_partitioning(lev, mafeuil, matigestruc, codeperenne, masec, restemp0, resplmax, densite, remobres, deltai, slamin, ratiotf, codeindetermin, dltams, cumdltares_prev):
     '''
     This module computes the reserves remobilisation with the cumulative partitioning approach (see chapter 7 of STICS book with code_acti_reserves = 2).
     '''
@@ -58,13 +58,23 @@ def cumultative_partitioning(lev, mafeuil, matigestruc, mafruit_prev, maenfruit_
     # Remobilised reserved
     if sourcepuits1 < 1:
         remob = (fpv + fpft) / 100 - dltams
+        remob = min(remob, remobres * restemp)
+        remobilj = min(remob, restemp)
+        if cumdltares_prev < restemp0:
+            dltaremobil = min(remob,restemp)
+            restemp = restemp - dltaremobil
+            remobilj = 0
+        else:
+            remobilj = min(remob, restemp)
+            dltaremobil = 0
+
     else:
-        remob = 0
-
-    dltaremobil = min(remob, remobres * restemp) # remobilisation limited by remobres parameter
-    # cumdltaremobil = cumdltaremobil_prev + dltaremobil
-
+        dltaremobil = 0
+        remobilj = 0
+    
     # Sink / source ratio after remobilisation
     sourcepuits = (dltams + dltaremobil) / (fpv + fpft) if fpv + fpft != 0 else 1 # same as sourcepuits1 here ?
 
-    return dltaremobil, restemp, dltams, fpv, sourcepuits, dltarestemp
+    cumdltares = cumdltares_prev + remobilj + dltaremobil
+
+    return dltaremobil, restemp, dltams, fpv, sourcepuits, dltarestemp, remobilj, cumdltares

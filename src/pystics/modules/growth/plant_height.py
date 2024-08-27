@@ -7,7 +7,7 @@ def plant_height(hautmax, hautbase, lai, laisen):
     '''
 
     hauteur = (
-        hautmax * (1 - np.exp(-0.7 * (lai + laisen)))
+        (hautmax- hautbase) * (1 - np.exp(-0.7 * (lai + laisen)))
         + hautbase
     ) 
 

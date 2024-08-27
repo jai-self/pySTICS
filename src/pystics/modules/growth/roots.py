@@ -2,7 +2,7 @@ import numpy as np
 from pystics.modules.water.water_stress import water_stress_on_root_growth
 
 def root_growth(ger_i, lax_i, sen_i, rec_i, stoprac, codeperenne, findorm_i, profsem, zrac, codetemprac,
-                tcult_prev, tcmax, tcmin, tgmin, croirac, hur_i, tsol_i, hmin, sensrsec, depth, daseuilbas, daseuilhaut, contrdamax, daf, lev_i, hcc, herbaceous, znonli):
+                tcult_prev, tcmax, tcmin, tgmin, croirac, hur_i, tsol_i_prev, hmin, sensrsec, depth, daseuilbas, daseuilhaut, contrdamax, daf, lev_i, hcc, herbaceous, znonli):
     """
     This module computes daily root growth (deltaz), maximum root depth (zrac) and maximum root depth without physical or phenological stop (znonli).
 
@@ -37,7 +37,7 @@ def root_growth(ger_i, lax_i, sen_i, rec_i, stoprac, codeperenne, findorm_i, pro
         if codetemprac == 1:
             deltaz_t = max(0,(min(tcult_prev,tcmax) - tcmin))
         elif codetemprac == 2:
-            deltaz_t = max(0,(min(tsol_i[ap].mean(),tcmax) - tgmin))
+            deltaz_t = max(0,(min(tsol_i_prev[ap].mean(),tcmax) - tgmin))
         
 
         # Water stress affecting root growth

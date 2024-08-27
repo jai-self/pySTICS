@@ -101,8 +101,10 @@ def crop_temperature(lev_i_prev, temp_max, rnet, et, temp_min, temp, z0):
     else: # tcult before emergence does not make sense, but is necessary for soil temperature calculation
         tcult = temp
         tcultmax = temp_max
+    
+    tcultmin = temp_min
 
-    return tcult, tcultmax
+    return tcult, tcultmax, tcultmin
 
 
 def wind_profile(zosolnu, hauteur):
@@ -134,7 +136,7 @@ def iterative_calculation(temp, lev_i_prev, temp_max, temp_min, et, z0, albedo, 
         rnet, rglo, albedolai, albsol = net_radiation(albedo, hur_i0, hminf_1, hccf_1, albveg, lai, trg, tcult_tmp, temp, tpm, fracinsol, codernet)
 
         # Crop temperature
-        tcult, tcultmax = crop_temperature(lev_i_prev, temp_max, rnet, et, temp_min, temp, z0)
+        tcult, tcultmax, tcultmin = crop_temperature(lev_i_prev, temp_max, rnet, et, temp_min, temp, z0)
 
         if np.isnan(tcult):
             raise pysticsException(
@@ -147,4 +149,4 @@ def iterative_calculation(temp, lev_i_prev, temp_max, temp_min, et, z0, albedo, 
         tcult_tmp = tcult
         j += 1
     
-    return rnet, rglo, albedolai, albsol, tcult, tcultmax, converge
+    return rnet, rglo, albedolai, albsol, tcult, tcultmax, tcultmin, converge

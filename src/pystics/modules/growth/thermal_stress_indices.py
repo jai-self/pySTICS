@@ -16,26 +16,26 @@ def thermal_stress_on_biomass_broduction(tcult_prev, temin, temax, teopt, teoptb
 
     return ftemp
 
-def thermal_stress_on_grain_filling(codetremp, temp_min_prev, tcultmax_prev, tminremp, tmaxremp):
+def thermal_stress_on_grain_filling(codetremp, tcultmin_prev, tcultmax_prev, tminremp, tmaxremp):
     '''
     This function computes the thermal stress index affecting grains/fruits filling.
     '''
 
     if codetremp == 1:
-        ftempremp = np.where((temp_min_prev > tminremp) & (tcultmax_prev < tmaxremp), 1, 0)
+        ftempremp = np.where((tcultmin_prev > tminremp) & (tcultmax_prev < tmaxremp), 1, 0)
 
     elif codetremp == 2:
         ftempremp = 1
 
     return ftempremp
 
-def frost_stress_on_fruit_number(temp_min, tgelflo90, tgelflo10, tletale, tdebgel,codgelflo):
+def frost_stress_on_fruit_number(tcultmin, tgelflo90, tgelflo10, tletale, tdebgel,codgelflo):
     '''
     This function computes the frost stress index affecting grain/fruit number.
     '''
 
     if codgelflo == 2:
-        fgelflo = frost_stress(temp_min,
+        fgelflo = frost_stress(tcultmin,
                                 tgelflo90,
                                 tgelflo10,
                                 tletale,

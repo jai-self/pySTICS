@@ -3,8 +3,8 @@ from pystics.modules.growth.thermal_stress_indices import frost_stress
 from pystics.exceptions import pysticsException
 
 
-def senescence(i, lev, ulai, somtemp, vlaimax, durviei, durvief, senfac_prev, udevcult, fstressgel,
-               dayLAIcreation_list, senstress_list, tdevelop_list, durvie_list, durage_list, deltai_list,
+def senescence(i, lev, ulai, somtemp, vlaimax, durviei, durvief, senfac_prev, fstressgel,
+               dayLAIcreation_list, senstress_list, tdevelop_list, durvie_list, durage_list, deltai_bis_list,
                 somsenreste_prev, lai0, ndebsen, dltafv_list, ratiosen, forage, msres_prev, msresiduel, msresjaune_prev, codlainet, pfeuilverte_list, dltams_list):
     '''
     This module computes leaf and biomass senescence.
@@ -51,13 +51,10 @@ def senescence(i, lev, ulai, somtemp, vlaimax, durviei, durvief, senfac_prev, ud
         #     durviesup = durvief * min(durviesupmax, java_inn-1)
         #     durvie_list[i] = durvie_list[i] + durviesup
 
-        # Development temperature (to compare to lifespan)
-        tdevelop_list[i] = 2**(udevcult/10)
-
         # Senescence of residual biomass for forage crops
         if forage:
             if msres_prev > 0:
-                deltamsresen = msresiduel * ratiosen * 2**(udevcult / 10) / durviei
+                deltamsresen = msresiduel * ratiosen * tdevelop_list[i] / durviei
                 msres_tmp = max(0, msres_prev - deltamsresen)
                 deltamsresen = msres_prev - msres_tmp
                 msres = msres_prev - deltamsresen
@@ -78,7 +75,7 @@ def senescence(i, lev, ulai, somtemp, vlaimax, durviei, durvief, senfac_prev, ud
                     dltaisen = dltaisen + lai0
                 dltamsen =  pfeuilverte_list[i] * ratiosen * dltams_list[i]
 
-            somsen = somsenreste_prev + tdevelop_list[int(dayLAIcreation_list[i]):i+1].sum()
+            somsen = somsenreste_prev + tdevelop_list[int(dayLAIcreation_list[i])+1:i+1].sum()
             while deltai_disappears: # as long as deltai become senescent, we check senescence of following day (several deltai can become senescent on day i)
                 
                 # Oldest non-senescent deltai
@@ -87,21 +84,21 @@ def senescence(i, lev, ulai, somtemp, vlaimax, durviei, durvief, senfac_prev, ud
                 # Compare development temperature to leaf area lifespan, and trigger senescence
                 if (somsen >= durvie_list[j]) & (j < i):
                     if codlainet == 2:
-                        dltaisen = dltaisen + deltai_list[j]
+                        dltaisen = dltaisen + deltai_bis_list[j]
                     somsen = somsen - durvie_list[j]
                     dltamsen = dltamsen + ratiosen * pfeuilverte_list[j] * dltams_list[j]
                     nb_deltai_senescent +=1
                 else:
                     deltai_disappears = False
             
-            somsenreste = somsen # fortran je comprends pas le sens de ce reste
+            somsenreste = somsen
         
         # Update oldest non-senescent deltai
         dayLAIcreation_list[i] = dayLAIcreation_list[i] + nb_deltai_senescent
 
     return dayLAIcreation_list, durage_list, senstress_list, tdevelop_list, durvie_list, dltaisen, somsenreste, ndebsen, somtemp, dltamsen, deltamsresen, msres, msresjaune, durvie_list[i]
 
-def senescence_stress(lev_i, ulai, vlaimax, temp_min_prev, tgeljuv10, tgeljuv90, tgelveg10, tgelveg90, tletale, tdebgel, codgeljuv, codgelveg):
+def senescence_stress(lev_i, ulai, vlaimax, tcultmin_prev, tgeljuv10, tgeljuv90, tgelveg10, tgelveg90, tletale, tdebgel, codgeljuv, codgelveg):
     '''
     This module computes frost stress affecting senescence.
     '''
@@ -115,11 +112,11 @@ def senescence_stress(lev_i, ulai, vlaimax, temp_min_prev, tgeljuv10, tgeljuv90,
             ulai < vlaimax
         ):  # si on est avant stade iamf --> fgeljuv
             if codgeljuv == 2:
-                fstressgel = frost_stress(temp_min_prev, tgeljuv90, tgeljuv10, tletale, tdebgel)
+                fstressgel = frost_stress(tcultmin_prev, tgeljuv90, tgeljuv10, tletale, tdebgel)
 
         else:  # après stade iamf -> fgelveg
             if codgelveg == 2:
-                fstressgel = frost_stress(temp_min_prev, tgelveg90, tgelveg10, tletale, tdebgel)
+                fstressgel = frost_stress(tcultmin_prev, tgelveg90, tgelveg10, tletale, tdebgel)
     else:
         fstressgel = 1
 
