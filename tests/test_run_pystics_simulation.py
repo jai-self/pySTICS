@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import os
 
-def test_tun_pystics_simulation():
+def test_run_wheat():
 
     species = 'wheat'
     variety = 'Talent'
@@ -14,7 +14,7 @@ def test_tun_pystics_simulation():
     weather_pystics, crop, manage, soil, station, constants, initial = parametrization_from_stics_example_files(species=species, variety=variety, xml_folder_path = mocked_dir + '/mocked_param_files')
     pystics_ble_test, mat = run_pystics_simulation(weather_pystics, crop, soil, constants, manage, station, initial)
 
-    pystics_ble_mocked = pd.read_csv(mocked_dir + '/pystics_simu_results.csv')
+    pystics_ble_mocked = pd.read_pickle(mocked_dir + '/pystics_simu_results.pkl')
 
     assert np.allclose(pystics_ble_test.mafruit.values, pystics_ble_mocked.mafruit.values, atol=1e-3)
     assert  np.allclose(pystics_ble_test.resrac.values, pystics_ble_mocked.resrac.values, atol=1e-3)

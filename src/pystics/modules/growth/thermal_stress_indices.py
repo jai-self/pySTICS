@@ -74,10 +74,10 @@ def frost_stress(t, tgel90, tgel10, tletale, tdebgel):
     b[mask2] = 1.0 - (a[mask2] * tdebgel)
     b[mask3] = 0.9 - (a[mask3] * tgel10)
     b[mask4] = 0. - (a[mask4] * tletale)
-    
-    stress[mask1] = 1
 
     stress[mask2 | mask3 | mask4] = (a[mask2 | mask3 | mask4] * t[mask2 | mask3 | mask4]) + b[mask2 | mask3 | mask4]
+
+    stress[mask1] = 1
     
     stress = np.clip(stress, 0, 1)
 

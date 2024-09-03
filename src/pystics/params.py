@@ -524,8 +524,10 @@ class ManageParams:
     CODEMODFAUCHE: int = 0
     HAUTCOUPE: float = 0.
     CODEFAUCHE: int = 0
-    JULFAUCHE: list = field(init=False)
-    MSCOUPEMINI: list = field(init=False)
+    JULFAUCHE: list = field(default_factory=lambda: [])
+    MSCOUPEMINI: list = field(default_factory=lambda: [])
+    JULTRAV: list = field(default_factory=lambda: [])
+    PROFTRAV: list = field(default_factory=lambda: [])
     
 
     def get_params_from_xml(self):
@@ -572,6 +574,23 @@ class ManageParams:
         else:
             self.JULFAUCHE = []
             self.MSCOUPEMINI = []
+
+        if int(dico['fichiertec']['formalisme'][1]['ta']['@nb_interventions']) == 1:
+            self.JULTRAV = [int(dico['fichiertec']['formalisme'][1]['ta']['intervention']['colonne'][0]['#text'])]
+            self.PROFTRAV = [int(float(dico['fichiertec']['formalisme'][1]['ta']['intervention']['colonne'][2]['#text']))]
+
+        elif int(dico['fichiertec']['formalisme'][1]['ta']['@nb_interventions']) > 1:
+            l_jultrav = []
+            l_proftrav = []
+            for i in dico['fichiertec']['formalisme'][1]['ta']['intervention']:
+                print(i)
+                l_jultrav.append(int(float(i['colonne'][0]['#text'])))
+                l_proftrav.append(int(float(i['colonne'][2]['#text'])))
+            self.JULTRAV = l_jultrav.copy()
+            self.PROFTRAV = l_proftrav.copy()
+        else:
+            self.JULTRAV = []
+            self.PROFTRAV = []
     
     def __post_init__(self):
         if self.file_path != '':

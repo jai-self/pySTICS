@@ -12,7 +12,7 @@ def initialize_outputs_df(weather, crop, manage, initial):
 
     # All computed variables initialized to zero
     colonnes_nulles = [
-        'deltaz','zrac','ulai','deltai_dev','deltai_stress','deltai', 'deltai_bis',
+        'deltaz','zrac','ulai','deltai', 'deltai_bis',
         'lai','laisen','dayLAIcreation','eos','flagrain','zdemi',
         'cumlracz','dltams','masec',
         'eo','eop','teta','ep','swfac',
@@ -107,8 +107,7 @@ def initialize_outputs_df(weather, crop, manage, initial):
         "gdh",
         "findorm",
         "cu",
-        "deltai_dens",
-        "deltai_t",
+        "tempeff",
         "esol",
         "stemflow",
         "mouill",

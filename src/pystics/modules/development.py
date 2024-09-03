@@ -30,7 +30,7 @@ def emergence(i, densite_list, lev, lev_i_prev, ger, ger_i_prev, moist, moist_i_
         if codegermin == 1:
         
             # Seed bed depth (profsem +/-1)
-            sb = range(max(0,int(profsem) - 1),int(profsem) + 2)
+            sb = range(max(0,int(profsem) - 2),int(profsem) + 1)
 
             ###################
             ### GERMINATION ###
@@ -42,10 +42,8 @@ def emergence(i, densite_list, lev, lev_i_prev, ger, ger_i_prev, moist, moist_i_
             hmin_sb = sum([hmin[z_index] for z_index in sb]) / len_sb
             hcc_sb = sum([hcc[z_index] for z_index in sb]) / len_sb
 
-            humirac[i,sb] = water_stress_on_root_growth(hur_sb, hmin_sb, hcc_sb, sensrsec, 2)
-
             # Growing degree days to reach germination
-            somger = somger_prev + max(0, tsol_i_prev[int(profsem)] - tgmin) * humirac[i,sb].mean() # does not depend on sowing day because this module is called when plt=1
+            somger = somger_prev + max(0, tsol_i_prev[int(profsem)-1] - tgmin) * water_stress_on_root_growth(hur_sb, hmin_sb, hcc_sb, sensrsec, 2)
             if somger >= stpltger:
                 ger[i:len(ger)] = 1
                 zrac = profsem
@@ -87,7 +85,7 @@ def emergence(i, densite_list, lev, lev_i_prev, ger, ger_i_prev, moist, moist_i_
         
         else:
 
-            sb = range(max(0,int(profsem) - 1),int(profsem) + 2)
+            sb = range(max(0,int(profsem) - 2),int(profsem) + 1)
             hb = range(sb[0], min(max(sb[-1],int(zrac))+1, depth))
 
             len_hb = len([i for i in hb])
@@ -95,8 +93,8 @@ def emergence(i, densite_list, lev, lev_i_prev, ger, ger_i_prev, moist, moist_i_
             hmin_hb = sum([hmin[z_index] for z_index in hb]) / len_hb
             hcc_hb = sum([hcc[z_index] for z_index in hb]) / len_hb
 
-            somelong = somelong_prev + max(0, tsol_i_prev[int(profsem)] - tgmin) * water_stress_on_root_growth(hur_hb, hmin_hb, hcc_hb, sensrsec, 2)
-
+            somelong = somelong_prev + max(0, tsol_i_prev[int(profsem)-1] - tgmin) * water_stress_on_root_growth(hur_hb, hmin_hb, hcc_hb, sensrsec, 2)
+            
             # Plantlet elongation
             elong = elmax * (1 - np.exp(-(belong* somelong)**celong))
 

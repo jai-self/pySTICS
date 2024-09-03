@@ -5,7 +5,7 @@ from pystics.exceptions import pysticsException
 
 def senescence(i, lev, ulai, somtemp, vlaimax, durviei, durvief, senfac_prev, fstressgel,
                dayLAIcreation_list, senstress_list, tdevelop_list, durvie_list, durage_list, deltai_bis_list,
-                somsenreste_prev, lai0, ndebsen, dltafv_list, ratiosen, forage, msres_prev, msresiduel, msresjaune_prev, codlainet, pfeuilverte_list, dltams_list):
+                somsenreste_prev, lai0, ndebsen, dltafv_list, ratiosen, forage, msres_prev, msresiduel, msresjaune_prev, codlainet, pfeuilverte_list, dltams_list, dltaisen):
     '''
     This module computes leaf and biomass senescence.
     See section 4.1.2 of STICS book.
@@ -15,7 +15,7 @@ def senescence(i, lev, ulai, somtemp, vlaimax, durviei, durvief, senfac_prev, fs
     '''
 
     # Initialize values
-    dltaisen, dltamsen, somsenreste, deltamsresen, msresjaune = 0, 0, 0, 0, 0
+    dltamsen, somsenreste, deltamsresen, msresjaune = 0, 0, 0, 0
     msres = msres_prev
 
     if lev[i] > 0:        
@@ -33,7 +33,7 @@ def senescence(i, lev, ulai, somtemp, vlaimax, durviei, durvief, senfac_prev, fs
 
         # Update lifespan of all non-senescent leaf areas
         for j in range(int(dayLAIcreation_list[i]),i):
-            durvie_list[j] = min(durvie_list[j], durage_list[j] * senstress_list[i])
+            durvie_list[j] = min(durvie_list[j], durage_list[j] * min(senstress_list[i], fstressgel))
 
             # if (amf_list[j] == 1) & (java_inn > 1):
             #     durviesup = durvief * min(durviesupmax, java_inn-1)
@@ -42,10 +42,10 @@ def senescence(i, lev, ulai, somtemp, vlaimax, durviei, durvief, senfac_prev, fs
         # Lifespan of leaf area produced on day i
         if (ulai <= vlaimax):
             durage_list[i] = (durviei)
-        else: 
+        else:
             durage_list[i] = durviei + (durvief - durviei) * (ulai - vlaimax) / (3 - vlaimax)
 
-        durvie_list[i] = durage_list[i] * senstress_list[i]
+        durvie_list[i] = durage_list[i] * min(senstress_list[i], fstressgel)
 
         # if (amf_list[i] == 1) & (java_inn > 1):
         #     durviesup = durvief * min(durviesupmax, java_inn-1)

@@ -78,7 +78,7 @@ def harvested_organs_mass(i, ircarb, masec, ircarb_prev, masec_prev, ftempremp, 
 
     # Average mass per grain/fruit
     if nbgrains > 0:
-        pgrain = np.minimum(mafruit / nbgrains * 100, pgrainmaxi)
+        pgrain = np.minimum(mafruit / nbgrains, pgrainmaxi)
     else:
         pgrain = 0
 

@@ -7,14 +7,13 @@ def leaf_growth(i, lev_i, lax_i, sum_upvt_post_lev, stlevamf, vlaimax, stamflax,
                     codlainet, dltaisenat_prev, fstressgel_prev, laisen_prev, lax, slamin, slamax, dltamsen_prev,
                     dltaisen_prev, lan_i, codephot_part, amf_i, tigefeuil, dltams_prev, codeindetermin, sla_prev, sen, sen_i_prev, somcour, stsenlan, lai_list, dltaremobil_prev, remobilj_prev):
     '''
-    This module computes the leaf growth (deltai) and its different components (ulai, deltai_dev, deltai_t, deltai_stress).
+    This module computes the leaf growth (deltai) and its different components (ulai, tempeff, turfac, densite).
     See section 4.1 of STICS book.
     '''
 
-    deltai, deltai_dev, deltai_dens, deltai_t, ulai, deltai_stress, efdensite = 0, 0, 0, 0, 0, 0, 1
+    deltai, tempeff, ulai, efdensite = 0, 0, 0, 1
     vmax = vmax_prev.copy()
     dltaisenat = dltaisenat_prev.copy()
-    dltaisen = dltaisen_prev.copy()
 
     # Leaf growth stop criteria
     if ((stopfeuille == 'LAX') & (lax_i == 1)): # determinate growth crops
@@ -59,50 +58,43 @@ def leaf_growth(i, lev_i, lax_i, sum_upvt_post_lev, stlevamf, vlaimax, stamflax,
         
         if ulai == 1:
             efdensite = 1
+
+        # Thermal component of leaf growth
+        tempeff = max(0, tcult_prev - tcmin)
+        if tcxstop >= 100:
+            if tcult_prev > tcmax:
+                tempeff = tcmax - tcmin
+        elif tcult_prev > tcmax:
+                tempeff = max(0,(tcmax - tcmin) * (tcult_prev - tcxstop) / (tcmax - tcxstop))
         
         # Development and interplant competition components of leaf growth
         if (udlaimax == 3) | (ulai <= udlaimax):
-            deltai_dev = dlaimax * (dlaimin + (1 - dlaimin)  / (1 + np.exp(pentlaimax * (vlaimax - ulai))))
-            deltai_dens = densite * efdensite
-            vmax = deltai_dev * deltai_dens
-
+            deltai = efdensite * densite * dlaimax * (dlaimin + (1 - dlaimin) / (1 + np.exp(pentlaimax * (vlaimax - ulai))))
+            vmax = deltai
         else:    
-            deltai_dev = vmax * (1 - (ulai - udlaimax) / (3 - udlaimax))**2 
-            deltai_dens = 1 
+            deltai = vmax * (1 - (ulai - udlaimax) / (3 - udlaimax))**2
         
-        # Thermal component of leaf growth
-        deltai_t = max(0, tcult_prev - tcmin)
-        if tcxstop >= 100:
-            if tcult_prev > tcmax:
-                deltai_t = tcmax - tcmin
-        elif tcult_prev > tcmax:
-                deltai_t = max(0,(tcmax - tcmin) * (tcult_prev - tcxstop) / (tcmax - tcxstop))
+        deltai = deltai * tempeff * turfac_prev
 
-        # Water stress affecting leaf growth
-        deltai_stress = turfac_prev
-
-        # Leaf growth
-        deltai = (
-            deltai_dev
-            * deltai_dens
-            * deltai_t
-            * deltai_stress
-        )
-
-        # Negative effect of photoperiod during days shortening period
-        if (codephot_part == 1) & (codeindetermin == 2):
-            if phoi < phoi_prev:
-                    deltai = (deltai * rfpi)
-            if phoi < phobase:
-                rfpi = 0
-                deltai = (deltai * rfpi)
-                ratiotf = ratiotf * rfpi
+        ratiotf = tigefeuil
+        if codeindetermin == 2: # splai not implemented
+            
+            # Negative effect of photoperiod during days shortening period
+            if codephot_part == 1:
+                if phoi < phobase:
+                    rfpi = 0
+                    deltai = deltai * rfpi
+                    ratiotf = tigefeuil * rfpi
+                else:
+                    deltai = deltai * rfpi
+        else:
         
-        # Max deltai
-        sbvmax = slamax / (1.0 + tigefeuil)
-        deltaimaxi = (dltams_prev + dltaremobil_prev + remobilj_prev) * sbvmax / 100.
-        if (amf_i > 0):
-            deltai = min(deltai, deltaimaxi)
+            # Max deltai
+            sbvmax = slamax / (1.0 + tigefeuil)
+            deltaimaxi = (dltams_prev + remobilj_prev) * sbvmax / 100. # not dltaremobil like in 4.7
+        
+            if (amf_i > 0):
+                deltai = min(deltai, deltaimaxi)
 
     elif lev_i == 1:
         ulai = 3
@@ -126,7 +118,7 @@ def leaf_growth(i, lev_i, lax_i, sum_upvt_post_lev, stlevamf, vlaimax, stamflax,
         if lan_i == 1:
             lai = 0
     else:
-        lai = max(lai_prev + deltai - dltaisen, 0)
+        lai = max(lai_prev + deltai - dltaisen_prev, 0)
 
     mafeuilverte = lai / slamax * 100
     
@@ -139,12 +131,18 @@ def leaf_growth(i, lev_i, lax_i, sum_upvt_post_lev, stlevamf, vlaimax, stamflax,
 
         else:
             dltaisen = dltaisenat
-    
+    else:
+        dltaisen = 0
+
     # Cumulated leaf senescence
-    laisen = laisen_prev + dltaisen # dltaisen i-1 if codlainet = 2, i if codlainet = 1
+    if codlainet == 1:
+        laisen = laisen_prev + dltaisen # dltaisen i-1 if codlainet = 2, i if codlainet = 1
+    else:
+        laisen = laisen_prev + dltaisen_prev
+
 
     if (lai <= 0) & (lan_i == 0) & (lax == 1):
         sen[i] = 1
         lan_i = 1
 
-    return deltai, deltai_dev, deltai_dens, deltai_t, ulai, deltai_stress, efdensite, vmax, lai, mafeuilverte, dltaisen, dltaisenat, laisen, lan_i, sen[i], ratiotf, stopfeuille_stage
+    return deltai, tempeff, ulai, efdensite, vmax, lai, mafeuilverte, dltaisen, dltaisenat, laisen, lan_i, sen[i], ratiotf, stopfeuille_stage

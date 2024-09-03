@@ -98,7 +98,7 @@ def water_stress_on_root_growth(hur, hmin, hcc, sensrsec, code_humirac):
     if code_humirac == 2:
         if hur > hmin:
             x = (hur - hmin) / (hcc - hmin)
-            humirac = sensrsec + (1-sensrsec) * hur
+            humirac = sensrsec + (1-sensrsec) * x
         else:
             humirac = sensrsec * hur / hmin
     else:
