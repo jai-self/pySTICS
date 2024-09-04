@@ -40,7 +40,7 @@ def frost_reduction_harvested_organs(i, ind_drp, nbgrains_prev, fgelflo, pgrain_
     return nbgrains, nbgraingel_list, pgraingel
 
 
-def carbon_harvest_index(ircarb_list, ind_mat, ind_drp, codeir, vitircarb, vitircarbt, irmax, sum_upvt_post_lev_list):
+def carbon_harvest_index(ircarb_list, ind_mat, ind_drp, codeir, vitircarb, vitircarbt, irmax, somcourdrp_list):
     """
     This module computes the harvest index (ircarb) during fruit filling.
     See section 8.1.1 of STICS book.
@@ -50,7 +50,7 @@ def carbon_harvest_index(ircarb_list, ind_mat, ind_drp, codeir, vitircarb, vitir
         if codeir == 1:
             ircarb_list[(index > ind_drp)] = np.minimum(vitircarb * (index[(index > ind_drp)] - ind_drp +1), irmax)
         else:
-            ircarb_list[(index > ind_drp)] = vitircarbt * (sum_upvt_post_lev_list[(index > ind_drp)] - sum_upvt_post_lev_list[ind_drp])
+            ircarb_list[(index > ind_drp)] = vitircarbt * somcourdrp_list[(index > ind_drp)]
         if ind_mat != 0:
             ircarb_list[index > ind_mat] = ircarb_list[ind_mat]
 

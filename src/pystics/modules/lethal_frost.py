@@ -2,7 +2,7 @@
 
 
 
-def lethal_frost(lai, mafeuilverte, laisen_prev, dltaisen, stopfeuille_stage, restemp, codeperenne, amf, lax, sen, lan, drp, mat, sum_upvt_post_lev, stsenlan, stlaxsen, stlevamf, stamflax, stlevdrp, stdrpmat):
+def lethal_frost(lai, mafeuilverte, laisen_prev, dltaisen, stopfeuille_stage, restemp, codeperenne, amf, lax, sen, lan, drp, mat, somcour, stsenlan, stlaxsen, stlevamf, stamflax, stlevdrp, stdrpmat):
     '''
     This modules computes the new pools when a lethal frost has occured.
     '''
@@ -15,10 +15,10 @@ def lethal_frost(lai, mafeuilverte, laisen_prev, dltaisen, stopfeuille_stage, re
     # Change phenological stages reached
     if (stopfeuille_stage == 1) & (lan == 0):
         lan = 1
-        stsenlan = sum_upvt_post_lev
+        stsenlan = somcour
         if sen == 0:
             sen = 1
-            stlaxsen = sum_upvt_post_lev
+            stlaxsen = somcour
             stsenlan = 0
     elif (restemp == 0) & (codeperenne == 1):
         if amf == 0:
@@ -27,7 +27,7 @@ def lethal_frost(lai, mafeuilverte, laisen_prev, dltaisen, stopfeuille_stage, re
             lax = 1
             sen = 1
             lan = 1
-            stlevamf = sum_upvt_post_lev
+            stlevamf = somcour
             stamflax = 0
             stlaxsen = 0
             stsenlan = 0
@@ -35,16 +35,16 @@ def lethal_frost(lai, mafeuilverte, laisen_prev, dltaisen, stopfeuille_stage, re
             lax = 1
             sen = 1
             lan = 1
-            stamflax = sum_upvt_post_lev
+            stamflax = somcour
             stlaxsen = 0
             stsenlan = 0
         if (sen == 0) & (lax == 1):
             sen = 1
             lan = 1
-            stlaxsen = sum_upvt_post_lev
+            stlaxsen = somcour
             stsenlan = 0    
     
-    stlevdrp = sum_upvt_post_lev
+    stlevdrp = somcour
     stdrpmat = 0
     drp = 1
     mat = 1

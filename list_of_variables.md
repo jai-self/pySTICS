@@ -721,7 +721,7 @@ emissa : float
     > Daily amount of water runoff along the stem. Unit : mm
 - stopfeuille : string
     > Phenological stage when leaf growth is stopped.
-- sum_upvt_post_lev : float
+- sum_upvt : float
     > Cumulated development unit (0 before emergence). Unit : degree day
 - swfac : float
    	> Stomatic water stress index. Unit : /
@@ -759,7 +759,7 @@ emissa : float
    	> Effective temperature during frost sensitivity period, computed with tcult. Unit : degree day
 - ulai : float
     > Relative development unit for leaf growth. Unit : /
-- upvt_post_lev : float
+- upvt : float
    	> Development unit (0 before emergence). Unit : degree day
 - vitmoy : float
    	> Mean canopy growth rate. Unit : g.m-2

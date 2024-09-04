@@ -99,8 +99,7 @@ def initialize_outputs_df(weather, crop, manage, initial):
         "lax",
         "amf",
         "mat",
-        "upvt_post_lev",
-        "sum_upvt_post_lev",
+        "upvt",
         "ebmax",
         "tetstomate",
         "teturg",
@@ -154,7 +153,7 @@ def initialize_outputs_df(weather, crop, manage, initial):
         'sumes0','sumes1','sumes2','ses2j0','sesj0','smes02','nstoc','stoc',
         'resrac',
         'ratm', 'daylen', 'humirac_mean',
-        'cumdltaremobil','sla','somcour', 'tursla', 'rec',
+        'cumdltaremobil','sla','somcour', 'somcourdrp', 'tursla', 'rec',
         'stopfeuille_stage', 'somelong', 'cumdltares', 'varintlai', 'varintms'
         
     ]
@@ -175,6 +174,7 @@ def initialize_outputs_df(weather, crop, manage, initial):
     df["ratiotf"] = crop.TIGEFEUIL
 
     df['vernalisation_ongoing'] = False
+    df['arretsomcourdrp'] = False
 
     # For indeterminate growth variables, initialize variables depending on plant parameters
     for K in range(crop.NBOITE):
@@ -211,7 +211,6 @@ def initialize_outputs_df(weather, crop, manage, initial):
         df['plt'] = 1
         df['lev'] = 1
         df['amf'] = 1
-        df.loc[0,'sum_upvt_post_lev'] = crop.STLEVAMF
 
     return df
 

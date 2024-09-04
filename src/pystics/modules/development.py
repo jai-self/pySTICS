@@ -337,8 +337,8 @@ def vernalisation_effect(herbaceous, codebfroid, ger_i, tfroid, tcult_prev, ampf
     return rfvi, jvi, vernalisation_ongoing
 
 
-def phenological_stage(lev_i, udevcult, rfpi, rfvi, sum_upvt_post_lev_prev, stlevamf, stamflax, stlevdrp, stflodrp,
-               stdrpdes, codeindetermin, stdrpmat, stdrpnou, codlainet, stlaxsen, stsenlan, lan_i_prev, somcour_prev):
+def phenological_stage(i, udevcult, rfpi, rfvi, stlevamf, stamflax, stlevdrp, stdrpdes, stlevflo, codeindetermin, stdrpmat, stdrpnou, codlainet, stlaxsen, stsenlan, somcour_prev, somcourdrp_prev,
+                       lev_list, amf_list, lax_list, flo_list, drp_list, nou_list, debdes_list, mat_list, sen_list, lan_list, lev_i_prev, codeperenne, arretsomcourdrp, codefauche):
     '''
     This module computes the phenological stage.
     Temperature acts on development from germination for herbaceous plants, and from dormancy break for ligneous plants.
@@ -346,62 +346,81 @@ def phenological_stage(lev_i, udevcult, rfpi, rfvi, sum_upvt_post_lev_prev, stle
     '''
 
     # Development temperature reduced by vernalisation and photoperiod effects
-    upvt_post_lev = (
-        lev_i
+    upvt = (
+        lev_list[i]
         * udevcult
         * rfpi
         * rfvi
     )
 
-    # Cumulated degree days from emergence (lev)
-    sum_upvt_post_lev = sum_upvt_post_lev_prev + upvt_post_lev
+    # Cumulated upvt between two stages
+    somcour = somcour_prev + upvt
 
-    # amf stage : 1 = amf stage reached, 0 else
-    amf_i = 1 if sum_upvt_post_lev >= stlevamf else 0
-    
-    # lax stage : 1 = lax stage reached, 0 else
-    lax_i = 1 if sum_upvt_post_lev >= stlevamf + stamflax else 0
-    
-    # flo stage : 1 = flo stage reached, 0 else
-    flo_i = 1 if sum_upvt_post_lev >= stlevdrp - stflodrp else 0
-
-    # drp stage : 1 = drp stage reached, 0 else
-    drp_i = 1 if sum_upvt_post_lev >= stlevdrp else 0
-
-    # debdes stage : 1 = debdes stage reached, 0 else
-    debdes_i = 1 if sum_upvt_post_lev >= stlevdrp + stdrpdes else 0
-    
-    if codlainet == 1:
-        sen_i = 1 if sum_upvt_post_lev >= stlevamf + stamflax + stlaxsen else 0
+    if lev_list[i] > 0:
+        somcourdrp = somcourdrp_prev + upvt
     else:
-        sen_i = 0
+        somcourdrp = somcourdrp_prev
+
+    if (codefauche == 1) & arretsomcourdrp & (codeindetermin == 1):
+        if (amf_list[i] > 0) & ((drp_list[i] == 0) | (flo_list[i] == 0)):
+            somcourdrp = somcourdrp - upvt
+
+
+    # lev stage day
+    if (lev_list[i] > 0) & (lev_i_prev == 0):
+        somcour = 0
+        if codeperenne == 1:
+            somcourdrp = 0
+
+    # amf stage
+    if (lev_list[i] > 0) & (amf_list[i] == 0) & (somcour > stlevamf):
+        amf_list[i:] = 1
+        somcour = 0
     
-    if sen_i == 1:
-        somcour = somcour_prev + upvt_post_lev
-    else:
+    # lax stage
+    if (amf_list[i] > 0) & (lax_list[i] == 0) & (somcour > stamflax):
+        lax_list[i:] = 1
         somcour = 0
 
-    if lan_i_prev == 1:
-        lan_i = 1
+    # sen stage for codlainet = 1
     if codlainet == 1:
-        lan_i = 1 if sum_upvt_post_lev >= stlevamf + stamflax + stlaxsen + stsenlan else 0
-    else:
-        lan_i = 0
+        if (lax_list[i] > 0) & (sen_list[i] == 0) & (somcour > stlaxsen):
+            sen_list[i:] = 1
+            somcour = 0
 
-    if codeindetermin == 1:
-        # mat stage : 1 = mat stage reached, 0 else
-        mat_i = 1 if sum_upvt_post_lev >= stlevdrp + stdrpmat else 0
-    else:
-        mat_i = lax_i
+    # lan stage
+    if codlainet == 1:
+        if (sen_list[i] > 0) & (lan_list[i] == 0) & (somcour > stsenlan):
+            lan_list[i:] = 1
+            somcour = 0
 
+    # flo stage
+    if (flo_list[i] == 0) & (somcourdrp > stlevflo):
+        flo_list[i:] = 1
+
+    # drp stage
+    if (drp_list[i] == 0) & (somcourdrp > stlevdrp):
+        drp_list[i:] = 1
+        somcourdrp = 0
+
+    # nou stage
     if codeindetermin == 2:
-        # nou stage : 1 = nou stage reached, 0 else
-        nou_i = 1 if sum_upvt_post_lev >= stlevdrp + stdrpnou else 0
+        if (drp_list[i] > 0) & (nou_list[i] == 0) & (somcourdrp > stdrpnou):
+            nou_list[i:] = 1
 
+    # mat stage
     if codeindetermin == 1:
-        return upvt_post_lev, sum_upvt_post_lev, amf_i, lax_i, flo_i, drp_i, debdes_i, mat_i, sen_i, lan_i, somcour
-    elif codeindetermin == 2:
-        return upvt_post_lev, sum_upvt_post_lev, amf_i, lax_i, flo_i, drp_i, debdes_i, mat_i, sen_i, lan_i, nou_i, somcour
+        if (drp_list[i] > 0) & (mat_list[i] == 0) & (somcourdrp > stdrpmat):
+            mat_list[i:] = 1
+    else:
+        pass # TODO for indeterminate growth plants
+
+
+    # debdes stage
+    if (drp_list[i] > 0) & (debdes_list[i] == 0) & (somcourdrp > stdrpdes):
+            debdes_list[i:] = 1
+
+    return upvt, somcour, somcourdrp, lev_list, amf_list, lax_list, flo_list, drp_list, nou_list, debdes_list, mat_list, sen_list, lan_list
 
 
 

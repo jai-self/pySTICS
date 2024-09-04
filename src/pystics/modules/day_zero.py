@@ -49,6 +49,8 @@ def compute_outputs_day_zero(outputs, crop, soil, manage, constants, initial, st
     ## 2. Development temperature
     if outputs.loc[0,'plt'] == 1:
         outputs.loc[0,'udevcult'], outputs.loc[0,'somtemp'], outputs.loc[0,'tdevelop'] = development_temperature(outputs.loc[0,'tmoy'], outputs.loc[0,'tmoy'], crop.TDMAX, crop.TDMIN, crop.TCXSTOP, crop.CODERETFLO, crop.STRESSDEV, 1, crop.CODETEMP, outputs.loc[0,'somtemp'], outputs.loc[0,'drp'])
+        outputs.loc[0,'udevcult'] = 0
+        outputs.loc[0, 'somtemp'] = 0
 
     ## 3. Effect of photoperiod
     if crop.CODEPHOT == 1:
@@ -63,17 +65,12 @@ def compute_outputs_day_zero(outputs, crop, soil, manage, constants, initial, st
         outputs.loc[0,'rfvi'] = 1
     
     ## 5. Compute of phenological stage this day
-    if crop.CODEINDETERMIN == 1:
-        outputs.loc[0,'upvt_post_lev'], outputs.loc[0,'sum_upvt_post_lev'], outputs.loc[0,'amf'], outputs.loc[0,'lax'], outputs.loc[0,'flo'], outputs.loc[0,'drp'], outputs.loc[0,'debdes'], outputs.loc[0,'mat'], outputs.loc[0,'sen'], outputs.loc[0,'lan'], outputs.loc[0,'somcour'] = phenological_stage(outputs.loc[0,'lev'], outputs.loc[0,'udevcult'], outputs.loc[0,'rfpi'], outputs.loc[0,'rfvi'], outputs.loc[0,'sum_upvt_post_lev'], crop.STLEVAMF,
-                                                crop.STAMFLAX, crop.STLEVDRP, crop.STFLODRP, crop.STDRPDES, crop.CODEINDETERMIN, crop.STDRPMAT, crop.STDRPNOU, crop.CODLAINET, crop.STLAXSEN, crop.STSENLAN, outputs.loc[0,'lan'], outputs.loc[0,'somcour'])
-    elif crop.CODEINDETERMIN == 2:  
-        outputs.loc[0,'upvt_post_lev'], outputs.loc[0,'sum_upvt_post_lev'], outputs.loc[0,'amf'], outputs.loc[0,'lax'], outputs.loc[0,'flo'], outputs.loc[0,'drp'], outputs.loc[0,'debdes'], outputs.loc[0,'mat'], outputs.loc[0,'sen'], outputs.loc[0,'lan'], outputs.loc[0,'nou'], outputs.loc[0,'somcour'] = phenological_stage(outputs.loc[0,'lev'], outputs.loc[0,'udevcult'], outputs.loc[0,'rfpi'], outputs.loc[0,'rfvi'], outputs.loc[0,'sum_upvt_post_lev'], crop.STLEVAMF,
-                                                crop.STAMFLAX, crop.STLEVDRP, crop.STFLODRP, crop.STDRPDES, crop.CODEINDETERMIN, crop.STDRPMAT, crop.STDRPNOU, crop.CODLAINET, crop.STLAXSEN, crop.STSENLAN, outputs.loc[0,'lan'], outputs.loc[0,'somcour'])
-
+    outputs.loc[0,'upvt'], outputs.loc[0,'somcour'], outputs.loc[0,'somcourdrp'], outputs['lev'], outputs['amf'], outputs['lax'], outputs['flo'], outputs['drp'], outputs['nou'], outputs['debdes'], outputs['mat'], outputs['sen'], outputs['lan'] = phenological_stage(0, outputs.loc[0,'udevcult'], outputs.loc[0,'rfpi'], outputs.loc[0,'rfvi'], crop.STLEVAMF,
+                                                crop.STAMFLAX, crop.STLEVDRP, crop.STDRPDES, crop.STLEVFLO, crop.CODEINDETERMIN, crop.STDRPMAT, crop.STDRPNOU, crop.CODLAINET, crop.STLAXSEN, crop.STSENLAN, outputs.loc[0,'somcour'], outputs.loc[0,'somcourdrp'], outputs['lev'].array, outputs['amf'].array, outputs['lax'].array, outputs['flo'].array, outputs['drp'].array, outputs['nou'].array, outputs['debdes'].array, outputs['mat'].array, outputs['sen'].array, outputs['lan'].array, outputs.loc[0,'lev'], crop.CODEPERENNE, outputs.loc[0,'arretsomcourdrp'], manage.CODEFAUCHE)
     ###################
     ### Leaf growth ###
     ###################
-    outputs.loc[0,'deltai'], outputs.loc[0,'tempeff'], outputs.loc[0,'ulai'], outputs.loc[0,'efdensite'], outputs.loc[0,'vmax'], outputs.loc[0,'lai'], outputs.loc[0,'mafeuilverte'], outputs.loc[0,'dltaisen'], outputs.loc[0,'dltaisenat'], outputs.loc[0,'laisen'], outputs.loc[0,'lan'], outputs.loc[0,'sen'], outputs.loc[0,'ratiotf'], outputs.loc[0,'stopfeuille_stage'] = leaf_growth(0, outputs.loc[0,'lev'], outputs.loc[0,'lax'], outputs.loc[0,'sum_upvt_post_lev'], crop.STLEVAMF, crop.VLAIMAX, crop.STAMFLAX, crop.UDLAIMAX, crop.DLAIMAX, crop.PENTLAIMAX,
+    outputs.loc[0,'deltai'], outputs.loc[0,'tempeff'], outputs.loc[0,'ulai'], outputs.loc[0,'efdensite'], outputs.loc[0,'vmax'], outputs.loc[0,'lai'], outputs.loc[0,'mafeuilverte'], outputs.loc[0,'dltaisen'], outputs.loc[0,'dltaisenat'], outputs.loc[0,'laisen'], outputs.loc[0,'lan'], outputs.loc[0,'sen'], outputs.loc[0,'ratiotf'], outputs.loc[0,'stopfeuille_stage'] = leaf_growth(0, outputs.loc[0,'lev'], outputs.loc[0,'lax'], outputs.loc[0,'drp'], crop.STLEVAMF, crop.VLAIMAX, crop.STAMFLAX, crop.UDLAIMAX, crop.DLAIMAX, crop.PENTLAIMAX,
                 outputs.loc[0,'tcult'], crop.TCXSTOP, crop.TCMAX, crop.TCMIN, crop.ADENS, crop.BDENS, outputs.loc[0,'densite'], outputs.loc[0,'turfac'], outputs.loc[0,'phoi'], outputs.loc[0,'phoi'], outputs.loc[0,'ratiotf'],
                 crop.PHOBASE, outputs.loc[0,'rfpi'], crop.DLAIMIN, outputs.loc[0,'lai'], crop.LAICOMP, crop.STOPFEUILLE, outputs.loc[0,'vmax'], crop.CODLAINET, outputs.loc[0,'dltaisenat'], outputs.loc[0,'fstressgel'], outputs.loc[0,'laisen'], outputs.loc[0,'lax'], crop.SLAMIN, crop.SLAMAX, outputs.loc[0,'dltamsen'], outputs.loc[0,'dltaisen'], outputs.loc[0,'lan'], crop.CODEPHOT_PART, outputs.loc[0,'amf'], crop.TIGEFEUIL, outputs.loc[0,'dltams'], crop.CODEINDETERMIN, outputs.loc[0,'sla'], outputs['sen'].array, outputs.loc[0,'sen'], outputs.loc[0,'somcour'], crop.STSENLAN, outputs['lai'].array, outputs.loc[0,'dltaremobil'], outputs.loc[0,'remobilj'])
     

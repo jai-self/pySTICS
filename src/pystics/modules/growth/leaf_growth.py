@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def leaf_growth(i, lev_i, lax_i, sum_upvt_post_lev, stlevamf, vlaimax, stamflax, udlaimax, dlaimax, pentlaimax,
+def leaf_growth(i, lev_i, lax_i, drp_i, stlevamf, vlaimax, stamflax, udlaimax, dlaimax, pentlaimax,
                     tcult_prev, tcxstop, tcmax, tcmin, adens, bdens, densite, turfac_prev, phoi, phoi_prev, ratiotf,
                     phobase, rfpi, dlaimin, lai_prev, laicomp, stopfeuille, vmax_prev,
                     codlainet, dltaisenat_prev, fstressgel_prev, laisen_prev, lax, slamin, slamax, dltamsen_prev,
@@ -23,22 +23,15 @@ def leaf_growth(i, lev_i, lax_i, sum_upvt_post_lev, stlevamf, vlaimax, stamflax,
 
     if (lev_i == 1) & (stopfeuille_stage == 0):
         
-        # Development effect on leaf growth
-        ulai = np.where(
-            sum_upvt_post_lev
-            < stlevamf,
-            1 + (vlaimax - 1) * (sum_upvt_post_lev / stlevamf),
-            np.where(
-                sum_upvt_post_lev
-                < stlevamf
-                + stamflax,
-                vlaimax
-                + (3 - vlaimax)
-                * (sum_upvt_post_lev - stlevamf)
-                / stamflax,
-                0,
-            ),
-        )
+        # Development effect on leaf growth (ulai)
+        if amf_i == 0:
+            ulai = 1 + (vlaimax - 1) * (somcour) / (stlevamf)
+
+        elif (amf_i > 0) & (lax_i == 0):
+            ulai = vlaimax + (3. - vlaimax) * (somcour) / (stamflax)
+
+        if ((codeindetermin == 2) & (drp_i > 0)) | (lax_i > 0):
+            ulai = udlaimax
         
         # Interplant competition effect on leaf growth
         efdensite = 1
@@ -115,6 +108,7 @@ def leaf_growth(i, lev_i, lax_i, sum_upvt_post_lev, stlevamf, vlaimax, stamflax,
             dltaisenat = lai_prev - lai
             if (lai <= 0) & (lan_i == 0):
                 lan_i = 1
+                lai = 0
         if lan_i == 1:
             lai = 0
     else:

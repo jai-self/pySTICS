@@ -74,6 +74,7 @@ class CropParams:
     STFLODRP: int = 0
     STDRPNOU: int = 0
     STDRPDES: int = 0
+    STLEVFLO: int = 0
     STLAXSEN: int = 0
     STSENLAN: int = 0
     CROIRAC: float = 0.
@@ -252,6 +253,8 @@ class CropParams:
         
         if self.CODLAINET == 2:
             self.DLAIMAX = self.DLAIMAXBRUT
+        
+        self.STLEVFLO = self.STLEVDRP - self.STFLODRP
 
     def get_params_from_xml(self):
         ''' 

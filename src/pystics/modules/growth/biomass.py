@@ -1,6 +1,6 @@
 import numpy as np
 
-def biomass_production(raint, lev, amf_prev, drp_prev, efcroijuv, efcroirepro, efcroiveg,
+def biomass_production(raint, lev, amf, drp, efcroijuv, efcroirepro, efcroiveg,
                              coefb, swfac_prev, fco2, ftemp, deltai, slamax):
     '''
     This module computes the daily aerial biomass production according to phenological stage, radiation, thermal and water stress, and CO2 effect.
@@ -8,9 +8,9 @@ def biomass_production(raint, lev, amf_prev, drp_prev, efcroijuv, efcroirepro, e
 
     # Maximal radiation use efficiency (RUE)
     ebmax = 0
-    if drp_prev == 1:
+    if drp == 1:
         ebmax = round(efcroirepro / 100, 5)
-    elif amf_prev == 1:
+    elif amf == 1:
         ebmax = round(efcroiveg / 100, 5)
     elif lev == 1:
         ebmax = round(efcroijuv / 100, 5)
