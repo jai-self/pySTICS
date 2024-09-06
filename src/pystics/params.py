@@ -5,6 +5,7 @@ import xmltodict
 import inspect
 from unidecode import unidecode
 import pkg_resources
+from typing import Optional
 
 PARAMS_FOLDER = pkg_resources.resource_filename(__name__, 'parametrization_files')
 
@@ -322,7 +323,7 @@ class SoilParams:
     """
 
     source: str = ''
-    ds = None # dataset with soil parameters in different locations in France
+    ds: Optional[any] = None  
     file_path: str = ''
     soil_name: str = ''
     latitude: float = 0.
