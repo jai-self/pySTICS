@@ -4,7 +4,7 @@ from pystics.exceptions import pysticsException
 
 
 def senescence(i, lev, ulai, somtemp, vlaimax, durviei, durvief, senfac_prev, fstressgel,
-               dayLAIcreation_list, senstress_list, tdevelop_list, durvie_list, durage_list, deltai_bis_list,
+               nsencour_list, senstress_list, tdevelop_list, durvie_list, durage_list, deltai_bis_list,
                 somsenreste_prev, lai0, ndebsen, dltafv_list, ratiosen, forage, msres_prev, msresiduel, msresjaune_prev, codlainet, pfeuilverte_list, dltams_list, dltaisen):
     '''
     This module computes leaf and biomass senescence.
@@ -23,7 +23,7 @@ def senescence(i, lev, ulai, somtemp, vlaimax, durviei, durvief, senfac_prev, fs
 
         # Initialize oldest non-senescent leaf area
         if i == ind_EMERG:
-            dayLAIcreation_list[i] = i
+            nsencour_list[i] = i
 
         # Stress index affecting senescence
         senstress_list[i] = min(senfac_prev, fstressgel)
@@ -32,7 +32,7 @@ def senescence(i, lev, ulai, somtemp, vlaimax, durviei, durvief, senfac_prev, fs
             senstress_list[i] = 1
 
         # Update lifespan of all non-senescent leaf areas
-        for j in range(int(dayLAIcreation_list[i]),i):
+        for j in range(int(nsencour_list[i]),i):
             durvie_list[j] = min(durvie_list[j], durage_list[j] * min(senstress_list[i], fstressgel))
 
             # if (amf_list[j] == 1) & (java_inn > 1):
@@ -75,28 +75,33 @@ def senescence(i, lev, ulai, somtemp, vlaimax, durviei, durvief, senfac_prev, fs
                     dltaisen = dltaisen + lai0
                 dltamsen =  pfeuilverte_list[i] * ratiosen * dltams_list[i]
 
-            somsen = somsenreste_prev + tdevelop_list[int(dayLAIcreation_list[i])+1:i+1].sum()
+            somsen = somsenreste_prev + tdevelop_list[int(nsencour_list[i])+1:i+1].sum()
             while deltai_disappears: # as long as deltai become senescent, we check senescence of following day (several deltai can become senescent on day i)
                 
                 # Oldest non-senescent deltai
-                j = int(dayLAIcreation_list[i]) + nb_deltai_senescent
+                j = int(nsencour_list[i]) + nb_deltai_senescent
 
                 # Compare development temperature to leaf area lifespan, and trigger senescence
                 if (somsen >= durvie_list[j]) & (j < i):
+                    nb_deltai_senescent +=1
                     if codlainet == 2:
                         dltaisen = dltaisen + deltai_bis_list[j]
                     somsen = somsen - durvie_list[j]
+                    if somsen < 0:
+                        somsen = 0
+                        nb_deltai_senescent = nb_deltai_senescent - 1
+                        break
+
                     dltamsen = dltamsen + ratiosen * pfeuilverte_list[j] * dltams_list[j]
-                    nb_deltai_senescent +=1
                 else:
                     deltai_disappears = False
             
             somsenreste = somsen
         
         # Update oldest non-senescent deltai
-        dayLAIcreation_list[i] = dayLAIcreation_list[i] + nb_deltai_senescent
+        nsencour_list[i] = nsencour_list[i] + nb_deltai_senescent
 
-    return dayLAIcreation_list, durage_list, senstress_list, tdevelop_list, durvie_list, dltaisen, somsenreste, ndebsen, somtemp, dltamsen, deltamsresen, msres, msresjaune, durvie_list[i]
+    return nsencour_list, durage_list, senstress_list, tdevelop_list, durvie_list, dltaisen, somsenreste, ndebsen, somtemp, dltamsen, deltamsresen, msres, msresjaune, durvie_list[i]
 
 def senescence_stress(lev_i, ulai, vlaimax, tcultmin_prev, tgeljuv10, tgeljuv90, tgelveg10, tgelveg90, tletale, tdebgel, codgeljuv, codgelveg):
     '''

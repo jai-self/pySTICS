@@ -18,15 +18,20 @@ def potential_transpiration_coef(lai, etp, kmax, codeintercept, eos, esol, extin
     else:
         emd = 0
 
-    # Maximal plant transpiration
-    edirectm = min(eos + emd, eo)
     edirect = esol + emd
-    
-    if edirectm > 0:
-        eop = (eo - edirectm) * (1.39999998 + (1-1.39999998) * (edirect / edirectm))
+
+    if lai > 0:
+        # Maximal plant transpiration
+        edirectm = min(eos + emd, eo)
+        
+        if edirectm > 0:
+            eop = (eo - edirectm) * (1.39999998 + (1-1.39999998) * (edirect / edirectm))
+        else:
+            eop = eo
+        eop = max(eop, 0)
     else:
-        eop = eo
-    eop = max(eop, 0)
+        eop = 0
+        edirectm = 0
         
     return eo, eop, emd, edirect, edirectm
 

@@ -93,6 +93,8 @@ def run_pystics_simulation(weather : pd.DataFrame, crop : CropParams, soil : Soi
     ### Daily loop ###
     ##################
     for i in range(1, len(outputs)-1):
+
+        # print(outputs.loc[i,'date'])
         
         #########################################################
         ### Update variables with value from the previous day ###
@@ -101,13 +103,15 @@ def run_pystics_simulation(weather : pd.DataFrame, crop : CropParams, soil : Soi
         outputs.loc[i,'zrac'] = outputs.loc[i-1,'zrac'].copy()
         outputs.loc[i,'znonli'] = outputs.loc[i-1,'znonli'].copy()
         outputs.loc[i,'nbfeuille'] = outputs.loc[i-1,'nbfeuille'].copy()
-        outputs.loc[i,'dayLAIcreation'] = outputs.loc[i-1,'dayLAIcreation'].copy()
+        outputs.loc[i,'nsencour'] = outputs.loc[i-1,'nsencour'].copy()
         hur[i] = hur[i-1].copy()
         humpotsol[i] = humpotsol[i-1].copy()
         outputs.loc[i,'rfvi'] = outputs.loc[i-1,'rfvi'].copy()
         outputs.loc[i,'vernalisation_ongoing'] = outputs.loc[i-1,'vernalisation_ongoing'].copy()
         outputs.loc[i,'msrec_fou_coupe'] = outputs.loc[i-1,'msrec_fou_coupe'].copy()
         outputs.loc[i,'arretsomcourdrp'] = outputs.loc[i-1,'arretsomcourdrp'].copy()
+        outputs.loc[i,'somcour'] = outputs.loc[i-1,'somcour'].copy() # necessary because phenological_stage takes somcour(i) computed in emergence module
+        outputs.loc[i,'somelong'] = outputs.loc[i-1,'somelong'].copy() # necessary because on germination day we compute somelong = somger - stpltger then somelong = somelong + ...
 
         ###################
         ### Development ###
@@ -119,7 +123,7 @@ def run_pystics_simulation(weather : pd.DataFrame, crop : CropParams, soil : Soi
                 outputs.loc[i:,'plt'] = 1
 
         ## 1. Emergence / budding
-        if outputs.loc[i,'plt'] == 1:
+        if outputs.loc[i-1,'plt'] == 1:
             if (crop.CODEPERENNE == 1) | (crop.HERBACEOUS):
                 outputs, humirac = emergence_macro(i, outputs, crop, soil, manage, tsol, humirac, hur, humpotsol)
             elif crop.CODEPERENNE == 2:
@@ -127,7 +131,7 @@ def run_pystics_simulation(weather : pd.DataFrame, crop : CropParams, soil : Soi
         
         ## 2. Development temperature
         if outputs.loc[i-1,'plt'] == 1:
-            outputs.loc[i,'udevcult'], outputs.loc[i,'somtemp'], outputs.loc[i,'tdevelop'] = development_temperature(outputs.loc[i-1,'tcult'], outputs.loc[i,'tmoy'], crop.TDMAX, crop.TDMIN, crop.TCXSTOP, crop.CODERETFLO, crop.STRESSDEV, outputs.loc[i-1,'turfac'], crop.CODETEMP, outputs.loc[i-1,'somtemp'], outputs.loc[i-1,'drp'])
+            outputs.loc[i,'udevcult'], outputs.loc[i,'somtemp'], outputs.loc[i,'tdevelop'] = development_temperature(outputs.loc[i-1,'tcult'], outputs.loc[i-1,'tmoy'], crop.TDMAX, crop.TDMIN, crop.TCXSTOP, crop.CODERETFLO, crop.STRESSDEV, outputs.loc[i-1,'turfac'], crop.CODETEMP, outputs.loc[i-1,'somtemp'], outputs.loc[i-1,'drp'])
 
         ## 3. Effect of photoperiod
         if crop.CODEPHOT == 1:
@@ -143,11 +147,11 @@ def run_pystics_simulation(weather : pd.DataFrame, crop : CropParams, soil : Soi
 
         ## 5. Compute of phenological stage this day
         outputs.loc[i,'upvt'], outputs.loc[i,'somcour'], outputs.loc[i,'somcourdrp'], outputs['lev'], outputs['amf'], outputs['lax'], outputs['flo'], outputs['drp'], outputs['nou'], outputs['debdes'], outputs['mat'], outputs['sen'], outputs['lan'] = phenological_stage(i, outputs.loc[i,'udevcult'], outputs.loc[i,'rfpi'], outputs.loc[i,'rfvi'], crop.STLEVAMF,
-                                                    crop.STAMFLAX, crop.STLEVDRP, crop.STDRPDES, crop.STLEVFLO, crop.CODEINDETERMIN, crop.STDRPMAT, crop.STDRPNOU, crop.CODLAINET, crop.STLAXSEN, crop.STSENLAN, outputs.loc[i-1,'somcour'], outputs.loc[i-1,'somcourdrp'], outputs['lev'].array, outputs['amf'].array, outputs['lax'].array, outputs['flo'].array, outputs['drp'].array, outputs['nou'].array, outputs['debdes'].array, outputs['mat'].array, outputs['sen'].array, outputs['lan'].array, outputs.loc[i-1,'lev'], crop.CODEPERENNE, outputs.loc[i,'arretsomcourdrp'], manage.CODEFAUCHE)
+                                                    crop.STAMFLAX, crop.STLEVDRP, crop.STDRPDES, crop.STLEVFLO, crop.CODEINDETERMIN, crop.STDRPMAT, crop.STDRPNOU, crop.CODLAINET, crop.STLAXSEN, crop.STSENLAN, outputs.loc[i,'somcour'], outputs.loc[i-1,'somcourdrp'], outputs['lev'].array, outputs['amf'].array, outputs['lax'].array, outputs['flo'].array, outputs['drp'].array, outputs['nou'].array, outputs['debdes'].array, outputs['mat'].array, outputs['sen'].array, outputs['lan'].array, outputs.loc[i-1,'lev'], crop.CODEPERENNE, outputs.loc[i,'arretsomcourdrp'], manage.CODEFAUCHE)
         ###################
         ### Leaf growth ###
         ###################
-        outputs.loc[i,'deltai'], outputs.loc[i,'tempeff'], outputs.loc[i,'ulai'], outputs.loc[i,'efdensite'], outputs.loc[i,'vmax'], outputs.loc[i,'lai'], outputs.loc[i,'mafeuilverte'], outputs.loc[i,'dltaisen'], outputs.loc[i,'dltaisenat'], outputs.loc[i,'laisen'], outputs.loc[i,'lan'], outputs.loc[i,'sen'], outputs.loc[i,'ratiotf'], outputs.loc[i,'stopfeuille_stage'] = leaf_growth(i, outputs.loc[i,'lev'], outputs.loc[i,'lax'], outputs.loc[i,'drp'], crop.STLEVAMF, crop.VLAIMAX, crop.STAMFLAX, crop.UDLAIMAX, crop.DLAIMAX, crop.PENTLAIMAX,
+        outputs.loc[i,'deltai'], outputs.loc[i,'tempeff'], outputs.loc[i,'ulai'], outputs.loc[i,'efdensite'], outputs.loc[i,'vmax'], outputs.loc[i,'lai'], outputs.loc[i,'mafeuilverte'], outputs.loc[i,'dltaisen'], outputs.loc[i,'dltaisenat'], outputs.loc[i,'laisen'], outputs.loc[i,'lan'], outputs.loc[i,'sen'], outputs.loc[i,'ratiotf'], outputs.loc[i,'stopfeuille_stage'], outputs.loc[i,'deltaimaxi'] = leaf_growth(i, outputs.loc[i,'lev'], outputs.loc[i,'lax'], outputs.loc[i,'drp'], crop.STLEVAMF, crop.VLAIMAX, crop.STAMFLAX, crop.UDLAIMAX, crop.DLAIMAX, crop.PENTLAIMAX,
                     outputs.loc[i-1,'tcult'], crop.TCXSTOP, crop.TCMAX, crop.TCMIN, crop.ADENS, crop.BDENS, outputs.loc[i,'densite'], outputs.loc[i-1,'turfac'], outputs.loc[i,'phoi'], outputs.loc[i-1,'phoi'], outputs.loc[i,'ratiotf'],
                     crop.PHOBASE, outputs.loc[i,'rfpi'], crop.DLAIMIN, outputs.loc[i-1,'lai'], crop.LAICOMP, crop.STOPFEUILLE, outputs.loc[i-1,'vmax'], crop.CODLAINET, outputs.loc[i-1,'dltaisenat'], outputs.loc[i-1,'fstressgel'], outputs.loc[i-1,'laisen'], outputs.loc[i,'lax'], crop.SLAMIN, crop.SLAMAX, outputs.loc[i-1,'dltamsen'], outputs.loc[i-1,'dltaisen'], outputs.loc[i,'lan'], crop.CODEPHOT_PART, outputs.loc[i,'amf'], crop.TIGEFEUIL, outputs.loc[i-1,'dltams'], crop.CODEINDETERMIN, outputs.loc[i-1,'sla'], outputs['sen'].array, outputs.loc[i-1,'sen'], outputs.loc[i,'somcour'], crop.STSENLAN, outputs['lai'].array, outputs.loc[i-1,'dltaremobil'], outputs.loc[i-1,'remobilj'])
         outputs.loc[i,'deltai_bis'] = outputs.loc[i,'deltai'].copy()
@@ -155,7 +159,7 @@ def run_pystics_simulation(weather : pd.DataFrame, crop : CropParams, soil : Soi
         #############################
         ### Intercepted radiation ###
         #############################
-        outputs.loc[i,'raint'] = radiation_interception(constants.PARSURRG, outputs.loc[i,'trg'], crop.EXTIN, outputs.loc[i,'lai'])
+        outputs.loc[i,'raint'] = radiation_interception(constants.PARSURRG, outputs.loc[i,'trg'], crop.EXTIN, outputs.loc[i,'lai'], outputs.loc[i-1,'eai'])
 
 
         #############################
@@ -183,7 +187,7 @@ def run_pystics_simulation(weather : pd.DataFrame, crop : CropParams, soil : Soi
         outputs.loc[i,'dltaremobil'], outputs.loc[i,'restemp'], outputs.loc[i,'dltams'], outputs.loc[i,'fpv'], outputs.loc[i,'sourcepuits'], outputs.loc[i,'dltarestemp'], outputs.loc[i,'remobilj'], outputs.loc[i,'cumdltares'] = cumultative_partitioning(outputs.loc[i,'lev'], outputs.loc[i,'mafeuil'], outputs.loc[i,'matigestruc'], crop.CODEPERENNE, outputs.loc[i-1,'masec'], initial.RESTEMP0, crop.RESPLMAX, outputs.loc[i,'densite'], crop.REMOBRES, outputs.loc[i,'deltai'], crop.SLAMIN, outputs.loc[i,'ratiotf'], crop.CODEINDETERMIN, outputs.loc[i,'dltams'], outputs.loc[i-1,'cumdltares'])
 
         outputs.loc[i,'masec'] = outputs.loc[i-1,'masec'] + outputs.loc[i,'dltams']
-        outputs.loc[i,'masecnp'] = outputs.loc[i,'matigestruc'] + outputs.loc[i-1,'masecnp'] + outputs.loc[i,'dltams'] - outputs.loc[i,'dltarestemp']
+        outputs.loc[i,'masecnp'] = outputs.loc[i-1,'masecnp'] + outputs.loc[i,'dltams'] - outputs.loc[i,'dltarestemp']
 
         ##################
         ### Senescence ###
@@ -194,14 +198,69 @@ def run_pystics_simulation(weather : pd.DataFrame, crop : CropParams, soil : Soi
         if outputs.loc[i,'fstressgel'] == 0:
             outputs.loc[i,'dltaisen'], outputs.loc[i,'dltamsen'], outputs.loc[i,'laisen'], outputs.loc[i,'amf'], outputs.loc[i,'lax'], outputs.loc[i,'sen'], outputs.loc[i,'lan'], outputs.loc[i,'drp'], outputs.loc[i,'mat'], crop.STSENLAN, crop.STLAXSEN, crop.STLEVAMF, crop.STAMFLAX, crop.STLEVDRP, crop.STDRPMAT = lethal_frost(outputs.loc[i,'lai'], outputs.loc[i,'mafeuilverte'], outputs.loc[i-1,'laisen'], outputs.loc[i,'dltaisen'], outputs.loc[i,'stopfeuille_stage'], outputs.loc[i,'restemp'], crop.CODEPERENNE, outputs.loc[i,'amf'], outputs.loc[i,'lax'], outputs.loc[i,'sen'], outputs.loc[i,'lan'], outputs.loc[i,'drp'], outputs.loc[i,'mat'], outputs.loc[i,'somcour'], crop.STSENLAN, crop.STLAXSEN, crop.STLEVAMF, crop.STAMFLAX, crop.STLEVDRP, crop.STDRPMAT)
         else:
-            outputs['dayLAIcreation'], outputs['durage'], outputs['senstress'], outputs['tdevelop'], outputs['durvie'], outputs.loc[i,'dltaisen'], outputs.loc[i,'somsenreste'], ndebsen, outputs.loc[i,'somtemp'], outputs.loc[i,'dltamsen'], outputs.loc[i,'deltamsresen'], outputs.loc[i,'msres'], outputs.loc[i,'msresjaune'], outputs.loc[i,'durvie_n'] = senescence(i, outputs['lev'], outputs.loc[i,'ulai'], outputs.loc[i,'somtemp'], crop.VLAIMAX, durviei, crop.DURVIEF, outputs.loc[i-1,'senfac'], outputs.loc[i,'fstressgel'],
-                outputs['dayLAIcreation'].array, outputs['senstress'].array, outputs['tdevelop'].array, outputs['durvie'].array, outputs['durage'].array, outputs['deltai_bis'].array, outputs.loc[i-1,'somsenreste'], initial.LAI0, ndebsen, outputs['dltafv'], crop.RATIOSEN, crop.CODEPLANTE, outputs.loc[i-1,'msres'], msresiduel, outputs.loc[i-1,'msresjaune'], crop.CODLAINET, outputs['pfeuilverte'], outputs['dltams'], outputs.loc[i,'dltaisen'])
+            outputs['nsencour'], outputs['durage'], outputs['senstress'], outputs['tdevelop'], outputs['durvie'], outputs.loc[i,'dltaisen'], outputs.loc[i,'somsenreste'], ndebsen, outputs.loc[i,'somtemp'], outputs.loc[i,'dltamsen'], outputs.loc[i,'deltamsresen'], outputs.loc[i,'msres'], outputs.loc[i,'msresjaune'], outputs.loc[i,'durvie_n'] = senescence(i, outputs['lev'], outputs.loc[i,'ulai'], outputs.loc[i,'somtemp'], crop.VLAIMAX, durviei, crop.DURVIEF, outputs.loc[i-1,'senfac'], outputs.loc[i,'fstressgel'],
+                outputs['nsencour'].array, outputs['senstress'].array, outputs['tdevelop'].array, outputs['durvie'].array, outputs['durage'].array, outputs['deltai_bis'].array, outputs.loc[i-1,'somsenreste'], initial.LAI0, ndebsen, outputs['dltafv'], crop.RATIOSEN, crop.CODEPLANTE, outputs.loc[i-1,'msres'], msresiduel, outputs.loc[i-1,'msresjaune'], crop.CODLAINET, outputs['pfeuilverte'], outputs['dltams'], outputs.loc[i,'dltaisen'])
 
         ######################
         ### Fallen biomass ###
         ######################
         outputs.loc[i,'dltamstombe'], outputs.loc[i,'mafeuiltombe'], outputs.loc[i,'mafeuiljaune'] = fallen_biomass(crop.ABSCISSION, outputs.loc[i,'dltamsen'], outputs.loc[i-1,'mafeuiltombe'], outputs.loc[i-1,'mafeuiljaune'])
+        
 
+
+        #######################
+        ### Yield formation ###
+        #######################
+        if (crop.CODEINDETERMIN == 1) & (crop.CODEPLANTE != 'FOU'):
+
+
+            #####################
+            ### Grains number ###
+            #####################
+            if (outputs.loc[i-1,'drp'] == 0) & (outputs.loc[i,'drp'] > 0): # drp day
+                outputs['vitmoy'], outputs.loc[i,'nbgrains'] = harvested_organs_number(i, outputs['dltams'].array, crop.NBJGRAIN, crop.CGRAINV0, crop.CGRAIN, crop.NBGRMAX, crop.NBGRMIN)
+
+            ############################
+            ### Carbon Harvest Index ###
+            ############################
+            outputs['ircarb'] = carbon_harvest_index(i, outputs['ircarb'].array, outputs['mat'].array, outputs['drp'].array, crop.CODEIR, crop.VITIRCARB, crop.VITIRCARBT, crop.IRMAX, outputs.loc[i,'somcourdrp'])
+        
+            # for i in range(ind_drp+1, len(outputs)-1):
+            if outputs.loc[i-1,'drp'] > 0:
+
+                ###########################
+                ### Frost stress indice ###
+                ###########################
+                if outputs.loc[i,'flo'] == 1:
+                    outputs.loc[i,'fgelflo'] = frost_stress_on_fruit_number(outputs.loc[i-1,'tcultmin'], crop.TGELFLO90, crop.TGELFLO10, crop.TLETALE, crop.TDEBGEL, crop.CODGELFLO)
+                else:
+                    outputs.loc[i,'fgelflo'] = 1
+
+                #############################
+                ### Thermal stress indice ###
+                #############################
+                outputs.loc[i,'ftempremp'] = thermal_stress_on_grain_filling(crop.CODETREMP, outputs.loc[i-1,'tcultmin'], outputs.loc[i-1,'tcultmax'], crop.TMINREMP, crop.TMAXREMP)
+
+                ######################################
+                ### Grains number reduced by frost ###
+                ######################################
+                outputs.loc[i,'nbgrains'], outputs['nbgraingel'], outputs.loc[i,'pgraingel'] = frost_reduction_harvested_organs(i, outputs['drp'].array, outputs.loc[i-1,'nbgrains'], outputs.loc[i,'fgelflo'], outputs['pgrain'], outputs['nbgraingel'].array)
+
+                ###################
+                ### Grains mass ###
+                ###################
+                outputs.loc[i,'mafruit'], outputs['deltags'], outputs.loc[i,'pgrain'] = harvested_organs_mass(i, outputs.loc[i,'ircarb'], outputs.loc[i,'masec'], outputs.loc[i-1,'ircarb'], outputs.loc[i-1,'masec'], outputs.loc[i,'ftempremp'], crop.PGRAINMAXI, outputs.loc[i,'nbgrains'], outputs['mat'].array, outputs['deltags'].array, outputs.loc[i-1,'mafruit'], outputs.loc[i-1,'pgrain'], outputs.loc[i,'nbgraingel'])
+
+                # Fruits/grains envelope biomass
+                outputs.loc[i,'maenfruit'] = outputs.loc[i,'nbgrains'] * crop.ENVFRUIT * crop.PGRAINMAXI * 0.01
+
+            ############################
+            ### Grains water content ###
+            ############################
+            outputs.loc[i,'teaugrain'] = grains_water_content(i, outputs['tcult'], outputs['tmoy'], outputs['debdes'], crop.H2OFRVERT, crop.DESHYDBASE, crop.TEMPDESHYD)
+      
+       
+       
         ###################
         ### Root growth ###
         ###################
@@ -309,26 +368,25 @@ def run_pystics_simulation(weather : pd.DataFrame, crop : CropParams, soil : Soi
         outputs.loc[i,'tursla'] = (outputs.loc[i-1,'tursla'] + outputs.loc[i,'turfac']) / 2
         outputs.loc[i,'sla'] = max(outputs.loc[i,'tursla'] * crop.SLAMAX, crop.SLAMIN)
 
+        ############################################
+        ### Equivalent leaf surface area for ear ###
+        ############################################
+        outputs.loc[i,'masecveg'] = outputs.loc[i,'masecnp'] - outputs.loc[i,'mafruit'] # / 100. # pdsfruittot = mafruit ?
+        outputs.loc[i,'maenfruit'] = crop.ENVFRUIT * outputs.loc[i,'nbgrains'] # chargefruit = nbgrains ?
+        outputs.loc[i,'maenfruit'] = min(outputs.loc[i,'maenfruit'], 0.99 * (outputs.loc[i,'masecveg'] - outputs.loc[i,'mafeuil'] - outputs.loc[i,'matigestruc']))
+        outputs.loc[i,'maenfruit'] = max(outputs.loc[i,'maenfruit'], 0.)
+        outputs.loc[i,'eai'] =  crop.SEA * outputs.loc[i,'maenfruit'] / 100
+
         ###################################################################
         ### Iterative calculation of crop temperature and net radiation ###
         ###################################################################
-        outputs.loc[i,'rnet'], outputs.loc[i,'rglo'], outputs.loc[i,'albedolai'], outputs.loc[i,'albsol'], outputs.loc[i,'tcult'], outputs.loc[i,'tcultmax'], outputs.loc[i,'converge'], outputs.loc[i,'tcultmin'] = iterative_calculation(outputs.loc[i,'tmoy'], outputs.loc[i-1,'lev'], outputs.loc[i,'temp_max'], outputs.loc[i,'temp_min'], outputs.loc[i,'et'], outputs.loc[i,'z0'], soil.ALBEDO, hur[i,0], soil.HMINF_1, soil.HCCF_1, station.ALBVEG, outputs.loc[i,'lai'], outputs.loc[i,'trg'], outputs.loc[i,'tpm'], outputs.loc[i,'fracinsol'], station.CODERNET,
+        outputs.loc[i,'rnet'], outputs.loc[i,'rglo'], outputs.loc[i,'albedolai'], outputs.loc[i,'albsol'], outputs.loc[i,'tcult'], outputs.loc[i,'tcultmax'], outputs.loc[i,'converge'], outputs.loc[i,'tcultmin'], outputs.loc[i,'ratm'], outputs.loc[i,'rnets'] = iterative_calculation(outputs.loc[i,'tmoy'], outputs.loc[i-1,'lev'], outputs.loc[i,'temp_max'], outputs.loc[i,'temp_min'], outputs.loc[i,'et'], outputs.loc[i,'z0'], soil.ALBEDO, hur[i,0], soil.HMINF_1, soil.HCCF_1, station.ALBVEG, outputs.loc[i,'lai'], outputs.loc[i,'trg'], outputs.loc[i,'tpm'], outputs.loc[i,'fracinsol'], station.CODERNET,
             station.CODECALTEMP, outputs.loc[i,'raint'], constants.PARSURRG, outputs.loc[i,'ratm'], outputs.loc[0,'tcultmin'], outputs.loc[i,'wind'], outputs.loc[0,'tcultmax'], outputs.loc[i,'daylen'], station.ZR, outputs.loc[i-1,'lai'], soil.Z0SOLNU, outputs.loc[i,'hauteur'])
 
         ########################
         ### Soil temperature ###
         #######"################
         outputs.loc[i,'amplsurf'], amplz[i], tsol[i] = soil_temperature(outputs.loc[i,'tcultmin'], outputs.loc[i,'tcultmax'], outputs.loc[i-1,'tcult'], outputs.loc[i,'temp_min'], soil.DEPTH, constants.DIFTHERM, tsol[i-1].copy())
-
-
-        ##############################
-        ### Thermal stress indices ###
-        ##############################
-        outputs.loc[i,'ftempremp'] = thermal_stress_on_grain_filling(crop.CODETREMP, outputs.loc[i,'tcultmin'], outputs.loc[i-1,'tcultmax'], crop.TMINREMP, crop.TMAXREMP)
-        if outputs.loc[i,'flo'] == 1:
-            outputs.loc[i,'fgelflo'] = frost_stress_on_fruit_number(outputs.loc[i,'tcultmin'], crop.TGELFLO90, crop.TGELFLO10, crop.TLETALE, crop.TDEBGEL, crop.CODGELFLO)
-        else:
-            outputs.loc[i,'fgelflo'] = 1
 
         # For forage crops only
         if crop.CODEPLANTE == 'FOU':
@@ -347,7 +405,7 @@ def run_pystics_simulation(weather : pd.DataFrame, crop : CropParams, soil : Soi
             ###############
             ### Cutting ###
             ###############
-            outputs.loc[i,'masectot'], outputs.loc[i,'msrec_fou'], outputs.loc[i,'mafruit'], outputs.loc[i,'masecneo'], outputs.loc[i,'msresjaune'], outputs.loc[i,'msneojaune'], outputs.loc[i,'mafeuiljaune'], outputs.loc[i,'masec'], outputs.loc[i,'msres'], outputs.loc[i,'lai'], cut_number, outputs.loc[i,'lev'], outputs.loc[i,'amf'], outputs.loc[i,'lax'], outputs.loc[i,'flo'], outputs.loc[i,'drp'], outputs.loc[i,'debdes'], outputs.loc[i,'dayLAIcreation'], outputs.loc[i,'somsenreste'], outputs.loc[i,'dltaisen'], outputs.loc[i,'laisen'], outputs.loc[i,'somcour'], outputs.loc[i,'somtemp'], outputs['deltai_bis'], outputs['dltams'], outputs['varintlai'], outputs['varintms'], outputs.loc[i,'msrec_fou_coupe'], outputs.loc[i,'arretsomcourdrp'] = cutting(manage.CODEFAUCHE, cut_number, manage.JULFAUCHE, outputs.loc[i,'doy'], manage.CODEMODFAUCHE, msresiduel, outputs.loc[i,'masec'], outputs.loc[i,'masecneo'], lairesiduel, outputs.loc[i,'lai'], outputs.loc[i,'msrec_fou'], outputs.loc[i,'mafruit'], manage.MSCOUPEMINI, outputs.loc[i,'masectot'], outputs.loc[i,'msresjaune'], outputs.loc[i,'msneojaune'], outputs.loc[i,'mafeuiljaune'], outputs.loc[i,'msres'], initial.STADE0, outputs.loc[i,'lev'], outputs.loc[i,'amf'], outputs.loc[i,'lax'], outputs.loc[i,'flo'], outputs.loc[i,'drp'], outputs.loc[i,'debdes'], i, outputs.loc[i,'dayLAIcreation'], outputs.loc[i,'deltai'], outputs.loc[i,'somsenreste'], outputs.loc[i,'dltaisen'], outputs.loc[i,'laisen'], outputs.loc[i,'somcour'], crop.STLEVAMF, outputs.loc[i,'somtemp'], outputs['deltai_bis'].array, outputs['dltams'].array, outputs['varintlai'].array, outputs['varintms'].array, outputs.loc[i,'msrec_fou_coupe'], outputs.loc[i,'arretsomcourdrp'])
+            outputs.loc[i,'masectot'], outputs.loc[i,'msrec_fou'], outputs.loc[i,'mafruit'], outputs.loc[i,'masecneo'], outputs.loc[i,'msresjaune'], outputs.loc[i,'msneojaune'], outputs.loc[i,'mafeuiljaune'], outputs.loc[i,'masec'], outputs.loc[i,'msres'], outputs.loc[i,'lai'], cut_number, outputs.loc[i,'lev'], outputs.loc[i,'amf'], outputs.loc[i,'lax'], outputs.loc[i,'flo'], outputs.loc[i,'drp'], outputs.loc[i,'debdes'], outputs.loc[i,'nsencour'], outputs.loc[i,'somsenreste'], outputs.loc[i,'dltaisen'], outputs.loc[i,'laisen'], outputs.loc[i,'somcour'], outputs.loc[i,'somtemp'], outputs['deltai_bis'], outputs['dltams'], outputs['varintlai'], outputs['varintms'], outputs.loc[i,'msrec_fou_coupe'], outputs.loc[i,'arretsomcourdrp'] = cutting(manage.CODEFAUCHE, cut_number, manage.JULFAUCHE, outputs.loc[i,'doy'], manage.CODEMODFAUCHE, msresiduel, outputs.loc[i,'masec'], outputs.loc[i,'masecneo'], lairesiduel, outputs.loc[i,'lai'], outputs.loc[i,'msrec_fou'], outputs.loc[i,'mafruit'], manage.MSCOUPEMINI, outputs.loc[i,'masectot'], outputs.loc[i,'msresjaune'], outputs.loc[i,'msneojaune'], outputs.loc[i,'mafeuiljaune'], outputs.loc[i,'msres'], initial.STADE0, outputs.loc[i,'lev'], outputs.loc[i,'amf'], outputs.loc[i,'lax'], outputs.loc[i,'flo'], outputs.loc[i,'drp'], outputs.loc[i,'debdes'], i, outputs.loc[i,'nsencour'], outputs.loc[i,'deltai'], outputs.loc[i,'somsenreste'], outputs.loc[i,'dltaisen'], outputs.loc[i,'laisen'], outputs.loc[i,'somcour'], crop.STLEVAMF, outputs.loc[i,'somtemp'], outputs['deltai_bis'].array, outputs['dltams'].array, outputs['varintlai'].array, outputs['varintms'].array, outputs.loc[i,'msrec_fou_coupe'], outputs.loc[i,'arretsomcourdrp'])       
 
         #########################
         ### End of daily loop ###
@@ -370,44 +428,10 @@ def run_pystics_simulation(weather : pd.DataFrame, crop : CropParams, soil : Soi
     outputs['radiative_stress'] = radiative_stress(outputs[['raint','ebmax']].copy(), constants.COEFB)
 
 
-    #######################
-    ### Yield formation ###
-    #######################
-    if (crop.CODEINDETERMIN == 1) & (crop.CODEPLANTE != 'FOU'):
-
-        #####################
-        ### Grains number ###
-        #####################
-        outputs['vitmoy'], outputs.loc[ind_drp,'nbgrains'] = harvested_organs_number(outputs['dltams'].array, ind_drp, crop.NBJGRAIN, crop.CGRAINV0, crop.CGRAIN, crop.NBGRMAX, crop.NBGRMIN)
-
-        ############################
-        ### Carbon Harvest Index ###
-        ############################
-        outputs['ircarb'] = carbon_harvest_index(outputs['ircarb'].array, ind_mat, ind_drp, crop.CODEIR, crop.VITIRCARB, crop.VITIRCARBT, crop.IRMAX, outputs['somcourdrp'])
-    
-        for i in range(ind_drp+1, len(outputs)-1):
-            ######################################
-            ### Grains number reduced by frost ###
-            ######################################
-            outputs.loc[i,'nbgrains'], outputs['nbgraingel'], outputs.loc[i,'pgraingel'] = frost_reduction_harvested_organs(i, ind_drp, outputs.loc[i-1,'nbgrains'], outputs.loc[i,'fgelflo'], outputs['pgrain'], outputs['nbgraingel'].array)
-
-            ###################
-            ### Grains mass ###
-            ###################
-            outputs.loc[i,'mafruit'], outputs['deltags'], outputs.loc[i,'pgrain'] = harvested_organs_mass(i, outputs.loc[i,'ircarb'], outputs.loc[i,'masec'], outputs.loc[i-1,'ircarb'], outputs.loc[i-1,'masec'], outputs.loc[i,'ftempremp'], crop.PGRAINMAXI, outputs.loc[i,'nbgrains'], ind_mat, outputs.loc[i,'pgraingel'], outputs['deltags'].array, ind_drp, outputs.loc[i-1,'mafruit'], outputs.loc[i-1,'pgrain'], outputs.loc[i,'nbgraingel'])
-
-            # Fruits/grains envelope biomass
-            outputs.loc[i,'maenfruit'] = outputs.loc[i,'nbgrains'] * crop.ENVFRUIT * crop.PGRAINMAXI * 0.01
-
-        ############################
-        ### Grains water content ###
-        ############################
-        if ind_drp != 0:
-            outputs['teaugrain'] = grains_water_content(outputs['tcult'], outputs['tmoy'], ind_debdes, crop.H2OFRVERT, crop.DESHYDBASE, crop.TEMPDESHYD)
-
-    elif crop.CODEPLANTE == 'FOU':
+    # YIELD
+    if crop.CODEPLANTE == 'FOU':
         outputs['msrec_fou_tot'] = outputs['msrec_fou'] + outputs['msrec_fou_coupe']
-    
+
     ########################
     ### Harvest criteria ###
     ########################

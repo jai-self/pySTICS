@@ -1,7 +1,7 @@
 import numpy as np
 from pystics.exceptions import pysticsException
 
-def radiation_interception(parsurrg, trg, extin, lai):
+def radiation_interception(parsurrg, trg, extin, lai, eai_prev):
     '''
     This module computes intercepted radiation, based on Beer's law.
     See section 9.2.1.1 of STICS book.
@@ -12,7 +12,7 @@ def radiation_interception(parsurrg, trg, extin, lai):
         0.95
         * parsurrg
         * trg
-        * (1 - np.exp(-extin * lai))
+        * (1 - np.exp(-extin * (lai + eai_prev)))
     )
 
     return raint
@@ -94,62 +94,55 @@ def crop_temperature(lev_i_prev, temp_max, rnet, et, temp_min, temp, z0, codecal
     This module computes crop surface temperature with the empirical approach or energy balance approach.
     See Section 9.3.2 of STICS book.
     '''
+        
+    if codecaltemp == 1: # Empirical method
 
-    if lev_i_prev > 0:
-    
-        if codecaltemp == 1: # Empirical method
+        # Max crop surface temperature
+        tcultmax = temp_max + (
+            rnet / 2.46 - et - 1.27
+        ) / (1.68 / np.log(1 / z0))
 
-            # Max crop surface temperature
-            tcultmax = temp_max + (
-                rnet / 2.46 - et - 1.27
-            ) / (1.68 / np.log(1 / z0))
-
-            tcultmax = max(tcultmax, temp_max)
-            tcultmin = temp_min
-
-        elif codecaltemp == 2: # Energy balance method (P. Cellier)
-            # hyp : atm radiation is constant over day
-    
-            # min & max aerodynamic resistances
-            wind_min = max(0.02,wind)*0.5
-            raamin, _ = calraero(zr, wind_min, lai_prev, z0solnu, hauteur)
-            wind_max = max(0.02,wind)*1.5
-            raamax, _ = calraero(zr, wind_max, lai_prev, z0solnu, hauteur)
-            
-            ratmh = ratm / 24 * 1e6 / 3600
-
-            sigma = 5.67e-8
-            rsolglo = sigma * (tcultmin + 273.15)**4
-            rglo = ratmh - rsolglo
-
-            # wind reduction
-            v = max(wind * np.exp(-0.96 * lai), 0.2)
-            rnetmin = rglo
-            gmin = gsol(6.0,v*0.5,rnetmin,0.0)
-            tcultmin = (rnetmin - gmin) * raamin / 1200 + temp_min
-
-            etmax = et * 3.14 / 2 / daylen * 2.46 * 1e6 / 3600
-            rgmax = trg * 3.14 / 2 / daylen * 1e6 / 3600
-
-            rsolglo = sigma * (tcultmax + 273.15)**4
-            rglo = ratmh - rsolglo
-            rnetmax = (1 - albedolai) * rgmax + rglo
-
-            rnetmax = max(rnetmax, rnetmin)
-
-            rnetsmax = rnets / rnet * rnetmax
-            gmax = 0.25 * rnetsmax
-            tcultmax = (rnetmax - gmax - etmax) * raamax / 1200 + temp_max
-
-        # Crop temperature 
-        tcult = (
-            tcultmin + tcultmax
-        ) / 2
-
-    else: # tcult before emergence does not make sense, but is necessary for soil temperature calculation
-        tcult = temp
+        tcultmax = max(tcultmax, temp_max)
         tcultmin = temp_min
-        tcultmax = temp_max
+
+    elif codecaltemp == 2: # Energy balance method (P. Cellier)
+        # hyp : atm radiation is constant over day
+
+        # min & max aerodynamic resistances
+        wind_min = max(0.02,wind)*0.5
+        raamin, _ = calraero(zr, wind_min, lai_prev, z0solnu, hauteur)
+        wind_max = max(0.02,wind)*1.5
+        raamax, _ = calraero(zr, wind_max, lai_prev, z0solnu, hauteur)
+        
+        ratmh = ratm / 24 * 1e6 / 3600
+
+        sigma = 5.67e-8
+        rsolglo = sigma * (tcultmin + 273.15)**4
+        rglo = ratmh - rsolglo
+
+        # wind reduction
+        v = max(wind * np.exp(-0.96 * lai), 0.2)
+        rnetmin = rglo
+        gmin = gsol(6.0,v*0.5,rnetmin,0.0)
+        tcultmin = (rnetmin - gmin) * raamin / 1200 + temp_min
+
+        etmax = et * 3.14 / 2 / daylen * 2.46 * 1e6 / 3600
+        rgmax = trg * 3.14 / 2 / daylen * 1e6 / 3600
+
+        rsolglo = sigma * (tcultmax + 273.15)**4
+        rglo = ratmh - rsolglo
+        rnetmax = (1 - albedolai) * rgmax + rglo
+
+        rnetmax = max(rnetmax, rnetmin)
+
+        rnetsmax = rnets / rnet * rnetmax
+        gmax = 0.25 * rnetsmax
+        tcultmax = (rnetmax - gmax - etmax) * raamax / 1200 + temp_max
+
+    # Crop temperature 
+    tcult = (
+        tcultmin + tcultmax
+    ) / 2
 
     return tcult, tcultmax, tcultmin
 
@@ -246,10 +239,10 @@ def iterative_calculation(temp, lev_i_prev, temp_max, temp_min, et, z0, albedo, 
             detail="tcult is nan",
         )
 
-        if tcult - tcult_tmp < 0.5:
+        if tcult - tcult_tmp <= 0.5:
             converge = True
             break
         tcult_tmp = tcult
         j += 1
     
-    return rnet, rglo, albedolai, albsol, tcult, tcultmax, converge, tcultmin
+    return rnet, rglo, albedolai, albsol, tcult, tcultmax, converge, tcultmin, ratm, rnets

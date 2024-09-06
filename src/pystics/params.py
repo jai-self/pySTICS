@@ -187,6 +187,7 @@ class CropParams:
     TUSTRESSMIN: float = 0.
     DURVIESUPMAX: float = 0.
     STOPRAC: str = ''
+    SEA: float = 0.
 
     STOPFEUILLE: float = field(init=False)
 
@@ -295,7 +296,7 @@ class CropParams:
             self.__setattr__(attr,num(i[1]))
 
         # 3. Extract variety-specific parameters
-        if any(i in self.file_path for i in ['wheat_plt','corn_plt','rapeseed_plt', 'timothy_plt', 'proto_barley']):
+        if any(i in self.file_path for i in ['wheat_plt','corn_plt','rapeseed_plt', 'timothy_plt', 'proto_barley', 'proto_sorghum', 'grass_plt']):
             for i in dico['fichierplt']['formalisme'][14]['tv']['variete']:
                 if unidecode(i['@nom'].lower()) == unidecode(self.variety.lower()):
                     results3 = list(set(gen_dict_extract('#text','@nom',i)))
@@ -586,7 +587,6 @@ class ManageParams:
             l_jultrav = []
             l_proftrav = []
             for i in dico['fichiertec']['formalisme'][1]['ta']['intervention']:
-                print(i)
                 l_jultrav.append(int(float(i['colonne'][0]['#text'])))
                 l_proftrav.append(int(float(i['colonne'][2]['#text'])))
             self.JULTRAV = l_jultrav.copy()

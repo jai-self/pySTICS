@@ -90,7 +90,7 @@ def root_density(lracz_i, zrac, znonli, depth, zprlim, zpente, ger_i, codeperenn
 
         # Root density
         root_range = range(max(0,int(profsem)-1), round(zrac_max))
-        lracz_i[root_range] = lvopt * humirac_i[root_range] / (1 + np.exp(-s * ((2*np.array([z_index for z_index in root_range]) +1)/2 - zdemi)))
+        lracz_i[root_range] = lvopt * humirac_i[root_range] / (1 + np.exp(-s * ((2*np.array([(z_index+1) for z_index in root_range]) +1)/2 - zdemi)))
                                        
     # Cumulated root length density
     cumlracz = lracz_i.sum()

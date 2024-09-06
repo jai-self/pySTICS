@@ -11,7 +11,7 @@ def leaf_growth(i, lev_i, lax_i, drp_i, stlevamf, vlaimax, stamflax, udlaimax, d
     See section 4.1 of STICS book.
     '''
 
-    deltai, tempeff, ulai, efdensite = 0, 0, 0, 1
+    deltai, tempeff, ulai, efdensite, deltaimaxi = 0, 0, 0, 1, 0
     vmax = vmax_prev.copy()
     dltaisenat = dltaisenat_prev.copy()
 
@@ -25,10 +25,10 @@ def leaf_growth(i, lev_i, lax_i, drp_i, stlevamf, vlaimax, stamflax, udlaimax, d
         
         # Development effect on leaf growth (ulai)
         if amf_i == 0:
-            ulai = 1 + (vlaimax - 1) * (somcour) / (stlevamf)
+            ulai = 1 + (vlaimax - 1) * somcour / stlevamf
 
         elif (amf_i > 0) & (lax_i == 0):
-            ulai = vlaimax + (3. - vlaimax) * (somcour) / (stamflax)
+            ulai = vlaimax + (3. - vlaimax) * somcour / stamflax
 
         if ((codeindetermin == 2) & (drp_i > 0)) | (lax_i > 0):
             ulai = udlaimax
@@ -139,4 +139,4 @@ def leaf_growth(i, lev_i, lax_i, drp_i, stlevamf, vlaimax, stamflax, udlaimax, d
         sen[i] = 1
         lan_i = 1
 
-    return deltai, tempeff, ulai, efdensite, vmax, lai, mafeuilverte, dltaisen, dltaisenat, laisen, lan_i, sen[i], ratiotf, stopfeuille_stage
+    return deltai, tempeff, ulai, efdensite, vmax, lai, mafeuilverte, dltaisen, dltaisenat, laisen, lan_i, sen[i], ratiotf, stopfeuille_stage, deltaimaxi
