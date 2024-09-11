@@ -6,7 +6,7 @@ import os
 
 def test_run_wheat():
 
-    species = 'wheat'
+    species = 'common_wheat'
     variety = 'Talent'
 
     mocked_dir = os.path.dirname(os.path.abspath(__file__)) + "/mocked_data"

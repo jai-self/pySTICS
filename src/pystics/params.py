@@ -203,7 +203,8 @@ class CropParams:
             self.xml_folder_path = PARAMS_FOLDER + '/plant'
         
         if self.file_path == '':
-            species_to_plant_files = {'wheat' : 'wheat_plt' if unidecode(self.variety.lower()) in ['arminda','talent','thesee','soissons','promentin','sideral','thetalent','thesarmin','shango'] else f'DurumWheat_{self.variety.upper()}_plt',
+            species_to_plant_files = {'durum_wheat' : f'DurumWheat_{self.variety.upper()}_plt',
+                                      'common_wheat' : 'wheat_plt',
                                       'rapeseed' : 'rapeseed_plt',
                                       'corn' : 'corn_plt',
                                       'alfalfa' : 'proto_alfalfa_plt',

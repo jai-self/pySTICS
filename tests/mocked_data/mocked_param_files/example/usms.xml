@@ -119,7 +119,7 @@
       <fobs>null</fobs>                                                                             
     </plante>                                                                                       
   </usm>                                                                                            
-  <usm nom="wheat">                                                                                 
+  <usm nom="common_wheat">                                                                                 
     <datedebut>290</datedebut>                                                                      
     <datefin>605</datefin>                                                                          
     <finit>ble_ini.xml</finit>                                                                      
