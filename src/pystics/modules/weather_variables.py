@@ -44,48 +44,102 @@ def check_weather_variables(weather, codeetp):
 
     return weather
 
-def compute_weather_variables(df, station, gamma):
+def compute_weather_variables(df, station, gamma, force_fracinsol_1=True):
     """
-    This function computes climatic variables from weather variables.
-    List of columns of weather: year / month / day / doy / temp_min / temp_max / radiation / etp / rain / wind / tpm / co2
-    etp / tpm are not mandatory (computed here if not in weather)
+    Computes climatic variables from weather variables.
+    
+    Parameters:
+    - df: DataFrame containing weather data (year, month, day, doy, temp_min, temp_max, radiation, etp, rain, wind, tpm, co2)
+    - station: Station object with necessary metadata (LATITUDE, CORECTROSEE, etc.)
+    - gamma: Psychrometric constant
+    - force_fracinsol_1: If True, forces fracinsol to 1 for all rows. Default is True.
+    - True is jumping over the plane of irradiance calculation and just takes the bifacialvF POA already 
+    - False expects GHI to then calculate (unshaded) POA internally on pysticks
+ 
     """
 
     # Mean temperature
     df['tmoy'] = (df.temp_min + df.temp_max) / 2
 
-    # STICS method for extraterrestrial radiations. (FAO method is defined but not used).
+    # STICS method for extraterrestrial radiations
     df['rgex'] = [rgex_stics(station.LATITUDE, df.doy[i]) for i in df.index]
-    # df['rgex'] = [rgex_fao(station.LATITUDE, df.doy[i]) for i in df.index]
 
-    df["esat"] = 0.6108 * np.exp(17.27 * (df["temp_max"] + df["temp_min"]) / 2 / ((df["temp_max"] + df["temp_min"]) / 2 + 237.3))
+    # Saturation vapor pressure
+    df["esat"] = 0.6108 * np.exp(17.27 * df["tmoy"] / (df["tmoy"] + 237.3))
     df["delta"] = 4098 * df["esat"] / ((df["tmoy"] + 237.3) ** 2)
 
-    # Water vapour pressure in air
-    df['tpm'] = (df['temp_min'] - station.CORECTROSEE).apply(tvar) # no option to give it as input in weather file
+    # Water vapor pressure in air
+    df['tpm'] = (df['temp_min'] - station.CORECTROSEE).apply(tvar)
 
-    
     # Photoperiod & daylength
-    df[['phoi','daylen']] = df.doy.apply(lambda x: pd.Series(photoperiod_and_day_length(station.LATITUDE, x)))
+    df[['phoi', 'daylen']] = df.doy.apply(lambda x: pd.Series(photoperiod_and_day_length(station.LATITUDE, x)))
 
     # Hourly temperature
     if 'hourly_temp' not in df.columns:
         df['hourly_temp'] = 0
-    if type(df.hourly_temp[0]) is str:
+    if isinstance(df.hourly_temp.iloc[0], str):
         df["hourly_temp"] = [ast.literal_eval(i) for i in df.hourly_temp]
 
-
-    # Insolation fraction : STICS methid (FAO coefficients are different, see below)
-    df['fracinsol'] = df.loc[:,['trg','rgex']].apply(lambda x : min(max(((x['trg'] / x['rgex']) - station.AANGST) / station.BANGST, 0), 1),
-                                   axis=1)
-    # fracinsol = (1.35 * (trg / rgex) - 0.35) # FAO method see net_out_lw_rad function https://github.com/woodcrafty/PyETo/blob/master/pyeto/fao.py
+    # Insolation fraction
+    if force_fracinsol_1:
+        df['fracinsol'] = 1
+    else:
+        df['fracinsol'] = df.loc[:, ['trg', 'rgex']].apply(
+            lambda x: min(max(((x['trg'] / x['rgex']) - station.AANGST) / station.BANGST, 0), 1),
+            axis=1
+        )
 
     # Potential evapotranspiration
     if station.CODEETP != 1:
-        df['etp'] = df.apply(lambda x : potential_etp(x['trg'], x['tmoy'], x['wind'], x['tpm'], gamma, station.CODEETP, station.ALPHAPT, x['fracinsol']),
-                                                   axis=1)
+        df['etp'] = df.apply(lambda x: potential_etp(
+            x['trg'], x['tmoy'], x['wind'], x['tpm'], gamma,
+            station.CODEETP, station.ALPHAPT, x['fracinsol']
+        ), axis=1)
 
     return df
+
+# def compute_weather_variables(df, station, gamma):
+#     """
+#     This function computes climatic variables from weather variables.
+#     List of columns of weather: year / month / day / doy / temp_min / temp_max / radiation / etp / rain / wind / tpm / co2
+#     etp / tpm are not mandatory (computed here if not in weather)
+#     """
+
+#     # Mean temperature
+#     df['tmoy'] = (df.temp_min + df.temp_max) / 2
+
+#     # STICS method for extraterrestrial radiations. (FAO method is defined but not used).
+#     df['rgex'] = [rgex_stics(station.LATITUDE, df.doy[i]) for i in df.index]
+#     # df['rgex'] = [rgex_fao(station.LATITUDE, df.doy[i]) for i in df.index]
+
+#     df["esat"] = 0.6108 * np.exp(17.27 * (df["temp_max"] + df["temp_min"]) / 2 / ((df["temp_max"] + df["temp_min"]) / 2 + 237.3))
+#     df["delta"] = 4098 * df["esat"] / ((df["tmoy"] + 237.3) ** 2)
+
+#     # Water vapour pressure in air
+#     df['tpm'] = (df['temp_min'] - station.CORECTROSEE).apply(tvar) # no option to give it as input in weather file
+
+    
+#     # Photoperiod & daylength
+#     df[['phoi','daylen']] = df.doy.apply(lambda x: pd.Series(photoperiod_and_day_length(station.LATITUDE, x)))
+
+#     # Hourly temperature
+#     if 'hourly_temp' not in df.columns:
+#         df['hourly_temp'] = 0
+#     if type(df.hourly_temp[0]) is str:
+#         df["hourly_temp"] = [ast.literal_eval(i) for i in df.hourly_temp]
+
+
+#     # Insolation fraction : STICS methid (FAO coefficients are different, see below)
+#     df['fracinsol'] = df.loc[:,['trg','rgex']].apply(lambda x : min(max(((x['trg'] / x['rgex']) - station.AANGST) / station.BANGST, 0), 1),
+#                                    axis=1)
+#     # fracinsol = (1.35 * (trg / rgex) - 0.35) # FAO method see net_out_lw_rad function https://github.com/woodcrafty/PyETo/blob/master/pyeto/fao.py
+
+#     # Potential evapotranspiration
+#     if station.CODEETP != 1:
+#         df['etp'] = df.apply(lambda x : potential_etp(x['trg'], x['tmoy'], x['wind'], x['tpm'], gamma, station.CODEETP, station.ALPHAPT, x['fracinsol']),
+#                                                    axis=1)
+
+#     return df
 
 def tvar(x):
     '''
